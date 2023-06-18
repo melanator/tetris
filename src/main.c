@@ -38,7 +38,7 @@ char board[TETRIS_HEIGHT][TETRIS_WIDTH] = {
 };
 
 void print_board(){
-    printf("╔════════════════════════╗                                                            ");
+    printf("╔════════════════════════╗");
     printf("\n");
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         printf("║");
@@ -50,7 +50,7 @@ void print_board(){
     }
     printf("╚════════════════════════╝");
     printf("\n");
-    fflush(NULL);
+
 }
 
 void print_next_tile(){
@@ -78,9 +78,11 @@ void refresh_screen(){
     gotoxy(30, 10);
     printf("Score %d", 0);
     gotoxy(0, TETRIS_HEIGHT+3);   // + 3 because of frames
+    fflush(NULL);
 }
 
 int main(int argc, char **argv){
+    clear();
     refresh_screen();
     update_tile(1,1);
     update_tile(2,2);
