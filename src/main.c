@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <termios.h>
 
 #define TETRIS_WIDTH    12                                /*  Tiles 2 pixels long, tetris width 12     */
 #define TETRIS_HEIGHT   20
@@ -9,6 +10,7 @@
 #define clear() printf("\033[H\033[J")                      /*  Clear all terminal board */
 #define gotoxy(x, y) printf("\033[%d;%dH", (y), (x))         /*  Puts cursor to X, Y      */
 
+static struct termios stored_settings;
 typedef struct shape {
     int width, height;
     char *pixels; // binary field
@@ -53,6 +55,33 @@ char board[TETRIS_HEIGHT][TETRIS_WIDTH] = {
     {"            "},
     {"            "}
 };
+
+void set_keypress(void)
+{
+	struct termios new_settings;
+
+	tcgetattr(0,&stored_settings);
+
+	new_settings = stored_settings;
+
+	/* 
+		Отключение канонического режима и вывода на экран 
+		и установка буфера ввода размером в 1 байт 
+	*/
+	new_settings.c_lflag &= (~ICANON);
+	new_settings.c_lflag &= (~ECHO);
+	new_settings.c_cc[VTIME] = 0;
+	new_settings.c_cc[VMIN] = 1;
+
+	tcsetattr(0,TCSANOW,&new_settings);
+	return;
+}
+
+void reset_keypress(void)
+{
+	tcsetattr(0,TCSANOW,&stored_settings);
+	return;
+}
 
 void return_cursor(void){
     /* return cursor to lowest cell */
@@ -127,7 +156,6 @@ void refresh_screen(){
 }
 
 int start_game(void){
-    char input;
     char welcome_sprite[] = "  -----   -----   -----   -----   -    ---  \n"
                             "    -     -         -     -  -    -   -     \n"
                             "    -     -----     -     --      -    ---  \n"
@@ -135,13 +163,20 @@ int start_game(void){
                             "    -     -----     -     -   -   -    ---  \n";
     printf("%s\n", welcome_sprite);
     printf("PRESS ANYKEY TO START");
-    getc(stdin);
     fflush(NULL);
-    return input;
+    return getchar();
 }
 
 int main(int argc, char **argv){
-    start_game();
+    set_keypress();
+
+    if (start_game() != '\n')
+    {
+        reset_keypress();
+        printf("\n");
+        return 0; // Not ENTER, exit
+    }
+
     clear();
     refresh_screen();
     print_shape(&shapes[3], 2, 2, &update_board);
@@ -150,6 +185,7 @@ int main(int argc, char **argv){
     refresh_screen();
     print_shape(&shapes[3], 32, 4, &print_tile);
     return_cursor();
+    reset_keypress();
     return 0;
 }
 
