@@ -76,7 +76,11 @@ void refresh_screen(){
     print_board();
     print_next_tile();
     gotoxy(30, 10);
-    printf("Score %d", 0);
+    printf("LEVEL: %d", 0);
+    gotoxy(30, 11);
+    printf("SCORE: %d", 0);
+    gotoxy(30, 12);
+    printf("BEST: %d", 0);
     gotoxy(0, TETRIS_HEIGHT+3);   // + 3 because of frames
     fflush(NULL);
 }
