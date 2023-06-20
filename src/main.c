@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <termios.h>
 
-#define TETRIS_WIDTH    12                                /*  Tiles 2 pixels long, tetris width 12     */
+#define TETRIS_WIDTH    12                                      
 #define TETRIS_HEIGHT   20
 #define TOTAL_WIDTH     80
 #define TILE            'X'
 
-#define clear() printf("\033[H\033[J")                      /*  Clear all terminal board */
-#define gotoxy(x, y) printf("\033[%d;%dH", (y), (x))         /*  Puts cursor to X, Y      */
+#define clear() printf("\033[H\033[J")                          /*  Clear all terminal board */
+#define gotoxy(x, y) printf("\033[%d;%dH", (y), (x))            /*  Puts cursor to X, Y      */
 
 static struct termios stored_settings;
 typedef struct shape {
@@ -89,6 +90,7 @@ void return_cursor(void){
 }
 
 void print_board(void){
+    gotoxy(0, 0);
     printf("╔════════════════════════╗");
     printf("\n");
     for (int i = 0; i < TETRIS_HEIGHT; i++){
@@ -147,14 +149,6 @@ void print_stats(void){
     printf("BEST: %d", 0);
 }
 
-void refresh_screen(){
-    print_board();
-    print_next_tile();
-    print_stats();
-    return_cursor();
-    fflush(NULL);
-}
-
 int start_game(void){
     char welcome_sprite[] = "  -----   -----   -----   -----   -    ---  \n"
                             "    -     -         -     -  -    -   -     \n"
@@ -167,6 +161,10 @@ int start_game(void){
     return getchar();
 }
 
+Shape get_next_shape(void) {
+    return shapes[rand() % 7];
+}
+
 int main(int argc, char **argv){
     set_keypress();
 
@@ -177,14 +175,22 @@ int main(int argc, char **argv){
         return 0; // Not ENTER, exit
     }
 
-    clear();
-    refresh_screen();
-    print_shape(&shapes[3], 2, 2, &update_board);
-    sleep(1);
-    clear();
-    refresh_screen();
-    print_shape(&shapes[3], 32, 4, &print_tile);
-    return_cursor();
+    Shape current_shape = get_next_shape();
+    Shape next_shape = get_next_shape();
+
+    while (1){
+        clear();
+        print_shape(&current_shape, 2, 2, &update_board);
+        print_board();
+        print_next_tile();
+        print_shape(&next_shape, 32, 4, &print_tile); 
+        print_stats();
+        return_cursor();
+        fflush(NULL);
+        sleep(1);
+        current_shape = next_shape;
+        next_shape = get_next_shape();
+    }
     reset_keypress();
     return 0;
 }
