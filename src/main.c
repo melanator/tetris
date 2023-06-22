@@ -17,6 +17,8 @@ typedef struct shape {
     char *pixels; // binary field
 } Shape;
 
+typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE} move;
+
 Shape shapes[7] = {
     {2, 2,  "**"
             "**"},      // Square
@@ -165,6 +167,35 @@ Shape get_next_shape(void) {
     return shapes[rand() % 7];
 }
 
+move read_user_input(){
+    move result;
+
+    switch (getchar())
+    {
+    case 'a':
+        result = MOVE_LEFT;
+        break;
+    case 'A':
+        result = MOVE_LEFT;
+        break;
+    case 'd':
+        result = MOVE_RIGHT;
+        break;
+    case 'D':
+        result = MOVE_RIGHT;
+        break;
+    case 'r':
+        result = MOVE_ROTATE;
+        break;
+    case 'R':
+        result = MOVE_ROTATE;
+        break;
+    default:
+        result = NOMOVE;
+    }
+    return result;
+}
+
 int main(int argc, char **argv){
     set_keypress();
 
@@ -178,6 +209,9 @@ int main(int argc, char **argv){
     Shape current_shape = get_next_shape();
     Shape next_shape = get_next_shape();
 
+    char input;
+    int speed; // ms
+
     while (1){
         clear();
         print_shape(&current_shape, 2, 2, &update_board);
@@ -186,7 +220,7 @@ int main(int argc, char **argv){
         print_shape(&next_shape, 32, 4, &print_tile); 
         print_stats();
         return_cursor();
-        fflush(NULL);
+        move user_input = read_user_input();
         sleep(1);
         current_shape = next_shape;
         next_shape = get_next_shape();
