@@ -2,11 +2,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <limits.h>
 
-#define TETRIS_WIDTH    12                                      
+#define TETRIS_WIDTH    16      /* 16 tiles stored in 2bit unsigned short */                                      
 #define TETRIS_HEIGHT   20
 #define TOTAL_WIDTH     80
 #define TILE            'X'
+#define SIDE_X          37      /* Pixel position for side x */
 
 #define clear() printf("\033[H\033[J")                          /*  Clear all terminal board */
 #define gotoxy(x, y) printf("\033[%d;%dH", (y), (x))            /*  Puts cursor to X, Y      */
@@ -16,6 +18,7 @@ typedef struct shape {
     int width, height;
     char *pixels; // binary field
 } Shape;
+typedef unsigned short tilerow;
 
 typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE} move;
 
@@ -35,29 +38,8 @@ Shape shapes[7] = {
             "** "}      // Reverse Z-shape
 };
 
-char board[TETRIS_HEIGHT][TETRIS_WIDTH] = { 
-    /*123456789012*/
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "},
-    {"            "}
-};
+/* Board is a bit-field*/
+tilerow board[TETRIS_HEIGHT] = { 0x0000 };
 
 void set_keypress(void)
 {
@@ -93,38 +75,41 @@ void return_cursor(void){
 
 void print_board(void){
     gotoxy(0, 0);
-    printf("╔════════════════════════╗");
+    printf("╔══════════════════════════════╗");
     printf("\n");
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         printf("║");
         for (int j = 0; j < TETRIS_WIDTH;  j++){
-            printf("%c%c", board[i][j], board[i][j]);
+            if(board[i] & (1 << j))
+                printf("%c%c", TILE, TILE);
+            else
+                printf("  ");
         }
         printf("║");
         printf("\n");
     }
-    printf("╚════════════════════════╝");
+    printf("╚══════════════════════════════╝");
+
     printf("\n");
 }
 
 void print_next_tile(void){
     const unsigned tile_size = 4;
-    gotoxy(30, 1);
+    gotoxy(SIDE_X, 1);
     printf("NEXT TILE:");
-    gotoxy(30, 2);
+    gotoxy(SIDE_X, 2);
     printf("╔══════╗");
     for (int i = 0; i < 3; i++){
-        gotoxy(30, i+3);
+        gotoxy(SIDE_X, i+3);
         printf("║      ║");
     }
-    gotoxy(30, tile_size+2);
+    gotoxy(SIDE_X, tile_size+2);
     printf("╚══════╝");
 }
 
 void update_board(unsigned x, unsigned y){
     // updates board on tile
-    if (y < TETRIS_HEIGHT || x < TETRIS_WIDTH)
-        board[y][x] = TILE;
+    board[y] |= (1 << x);
 }
 
 void print_tile(unsigned x, unsigned y){
@@ -143,11 +128,11 @@ void print_shape(const Shape* sh, int x_pos, int y_pos, void(*func)(unsigned, un
 }
 
 void print_stats(void){
-    gotoxy(30, 10);
+    gotoxy(SIDE_X, 10);
     printf("LEVEL: %d", 0); 
-    gotoxy(30, 11); 
+    gotoxy(SIDE_X, 11); 
     printf("SCORE: %d", 0); 
-    gotoxy(30, 12);
+    gotoxy(SIDE_X, 12);
     printf("BEST: %d", 0);
 }
 
@@ -254,14 +239,14 @@ int main(int argc, char **argv){
         /* Move current tile down if needed*/
         
         /* Print board */
+        sleep(1);
         clear();
         print_shape(&current_shape, 2, 2, &update_board);
         print_board();
         print_next_tile();
-        print_shape(&next_shape, 32, 4, &print_tile); 
+        print_shape(&next_shape, SIDE_X+2, 4, &print_tile); 
         print_stats();
         return_cursor();
-        sleep(1);
     }
     reset_keypress();
     return 0;
