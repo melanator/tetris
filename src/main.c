@@ -158,7 +158,7 @@ int start_game(void){
                             "    -     -         -     -  -    -       - \n"
                             "    -     -----     -     -   -   -    ---  \n";
     printf("%s\n", welcome_sprite);
-    printf("PRESS ANYKEY TO START");
+    printf("PRESS ENTER TO START");
     fflush(NULL);
     return getchar();
 }
@@ -184,16 +184,26 @@ move read_user_input(){
     case 'D':
         result = MOVE_RIGHT;
         break;
-    case 'r':
+    case 'w':
         result = MOVE_ROTATE;
         break;
-    case 'R':
+    case 'W':
         result = MOVE_ROTATE;
+        break;
+    case 's':
+        result = MOVE_DOWN;
+        break;
+    case 'S':
+        result = MOVE_DOWN;
         break;
     default:
         result = NOMOVE;
     }
     return result;
+}
+
+int check_fill_row(){
+    return -1;
 }
 
 int main(int argc, char **argv){
@@ -202,7 +212,7 @@ int main(int argc, char **argv){
     if (start_game() != '\n')
     {
         reset_keypress();
-        printf("\n");
+        printf("Good bye");
         return 0; // Not ENTER, exit
     }
 
@@ -211,8 +221,39 @@ int main(int argc, char **argv){
 
     char input;
     int speed; // ms
+    int level;
 
     while (1){
+        /* Check if row filled when tile grounded*/
+        int filled_row = check_fill_row();
+        while(filled_row != -1){
+
+        }
+            /* Delete row */
+            /* Print new shape on top  */
+            /* update next tile*/
+            current_shape = next_shape;
+            next_shape = get_next_shape();
+
+        /* Read user input*/
+        move user_input = read_user_input();
+
+        /* Apply user move */
+        switch (user_input){
+        case MOVE_LEFT:
+            break;
+        case MOVE_RIGHT:
+            break;
+        case MOVE_DOWN:
+            break;
+        case MOVE_ROTATE:
+            break;
+        case NOMOVE:
+            break;
+        }
+        /* Move current tile down if needed*/
+        
+        /* Print board */
         clear();
         print_shape(&current_shape, 2, 2, &update_board);
         print_board();
@@ -220,12 +261,8 @@ int main(int argc, char **argv){
         print_shape(&next_shape, 32, 4, &print_tile); 
         print_stats();
         return_cursor();
-        move user_input = read_user_input();
         sleep(1);
-        current_shape = next_shape;
-        next_shape = get_next_shape();
     }
     reset_keypress();
     return 0;
 }
-
