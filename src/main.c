@@ -14,28 +14,18 @@
 #define gotoxy(x, y) printf("\033[%d;%dH", (y), (x))            /*  Puts cursor to X, Y      */
 
 static struct termios stored_settings;
-typedef struct shape {
-    int width, height;
-    char *pixels; // binary field
-} Shape;
 typedef unsigned short tilerow;
-
+typedef tilerow Shape;
 typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE} move;
 
 Shape shapes[7] = {
-    {2, 2,  "**"
-            "**"},      // Square
-    {4, 1, "****"},     // Bar
-    {3, 2,  " * "
-            "***"},     // T-shape
-    {3, 2,  "*  "
-            "***"},     // L -shape
-    {3, 2,  "  *"
-            "***"},     // Reverse L-shape
-    {3, 2,  "** "
-            " **"},     // Z-shape
-    {3, 2,  " **"
-            "** "}      // Reverse Z-shape
+    0x0033,       // Square
+    0x000f,       // Bar
+    0x0027,     // T-shape
+    0x0047,     // L -shape
+    0x0017,     // Reverse L-shape
+    0x0063,     // Z-shape
+    0x0036      // Reverse Z-shape
 };
 
 /* Board is a bit-field*/
@@ -75,7 +65,7 @@ void return_cursor(void){
 
 void print_board(void){
     gotoxy(0, 0);
-    printf("╔══════════════════════════════╗");
+    printf("╔════════════════════════════════╗");
     printf("\n");
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         printf("║");
@@ -88,8 +78,7 @@ void print_board(void){
         printf("║");
         printf("\n");
     }
-    printf("╚══════════════════════════════╝");
-
+    printf("╚════════════════════════════════╝");
     printf("\n");
 }
 
@@ -118,10 +107,11 @@ void print_tile(unsigned x, unsigned y){
     printf("%c", TILE);
 }
 
-void print_shape(const Shape* sh, int x_pos, int y_pos, void(*func)(unsigned, unsigned)){
-    for(int i = 0; i < sh->height; i++){
-        for (int j = 0; j < sh->width; j++){
-            if(sh->pixels[j+i*sh->width] == '*')
+void print_shape(const Shape sh, int x_pos, int y_pos, void(*func)(unsigned, unsigned)){
+    /* bit-wise AND with shifted one*/
+    for(int i = 0; i < 4; i++){         // Row iterating
+        for (int j = 0; j < 4; j++){    // Line iterating
+            if(sh & (1 << i*4 + j))
                 func(x_pos+j, y_pos+i);
         }
     }
@@ -150,6 +140,10 @@ int start_game(void){
 
 Shape get_next_shape(void) {
     return shapes[rand() % 7];
+}
+
+Shape rotate_shape(Shape shape){
+    return shape;
 }
 
 move read_user_input(){
@@ -184,6 +178,7 @@ move read_user_input(){
     default:
         result = NOMOVE;
     }
+    fflush(stdin);
     return result;
 }
 
@@ -239,14 +234,14 @@ int main(int argc, char **argv){
         /* Move current tile down if needed*/
         
         /* Print board */
-        sleep(1);
         clear();
-        print_shape(&current_shape, 2, 2, &update_board);
+        print_shape(current_shape, 2, 2, &update_board);
         print_board();
         print_next_tile();
-        print_shape(&next_shape, SIDE_X+2, 4, &print_tile); 
+        print_shape(next_shape, SIDE_X+2, 4, &print_tile); 
         print_stats();
         return_cursor();
+        sleep(1);
     }
     reset_keypress();
     return 0;
