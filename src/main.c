@@ -1,26 +1,21 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <termios.h>
-#include <limits.h>
+#include <ncurses.h>
 
 #define TETRIS_WIDTH    16      /* 16 tiles stored in 2bit unsigned short */                                      
 #define TETRIS_HEIGHT   20
+#define PIXELS_PER_COLUMN 2
 #define TOTAL_WIDTH     80
 #define TILE            'X'
-#define SIDE_X          37      /* Pixel position for side x */
 
-#define clear() printf("\033[H\033[J")                          /*  Clear all terminal board */
-#define gotoxy(x, y) printf("\033[%d;%dH", (y), (x))            /*  Puts cursor to X, Y      */
-
-static struct termios stored_settings;
 typedef unsigned short tilerow;
 typedef tilerow Shape;
-typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE} move;
+typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE} move_choice;
 
 Shape shapes[7] = {
-    0x0033,       // Square
-    0x000f,       // Bar
+    0x0033,     // Square
+    0x000f,     // Bar
     0x0027,     // T-shape
     0x0047,     // L -shape
     0x0017,     // Reverse L-shape
@@ -31,70 +26,21 @@ Shape shapes[7] = {
 /* Board is a bit-field*/
 tilerow board[TETRIS_HEIGHT] = { 0x0000 };
 
-void set_keypress(void)
-{
-	struct termios new_settings;
-
-	tcgetattr(0,&stored_settings);
-
-	new_settings = stored_settings;
-
-	/* 
-		Отключение канонического режима и вывода на экран 
-		и установка буфера ввода размером в 1 байт 
-	*/
-	new_settings.c_lflag &= (~ICANON);
-	new_settings.c_lflag &= (~ECHO);
-	new_settings.c_cc[VTIME] = 0;
-	new_settings.c_cc[VMIN] = 1;
-
-	tcsetattr(0,TCSANOW,&new_settings);
-	return;
-}
-
-void reset_keypress(void)
-{
-	tcsetattr(0,TCSANOW,&stored_settings);
-	return;
-}
-
-void return_cursor(void){
-    /* return cursor to lowest cell */
-    gotoxy(0, TETRIS_HEIGHT+3);   // + 3 because of frames
-}
-
-void print_board(void){
-    gotoxy(0, 0);
-    printf("╔════════════════════════════════╗");
-    printf("\n");
+void print_board(WINDOW *win){
+    box(win, 0, 0);
     for (int i = 0; i < TETRIS_HEIGHT; i++){
-        printf("║");
         for (int j = 0; j < TETRIS_WIDTH;  j++){
-            if(board[i] & (1 << j))
-                printf("%c%c", TILE, TILE);
-            else
-                printf("  ");
+            if(board[i] & (1 << j)){
+                wmove(win, j, i*2);
+                waddch(win, TILE);
+                waddch(win, TILE);
+            }
         }
-        printf("║");
-        printf("\n");
     }
-    printf("╚════════════════════════════════╝");
-    printf("\n");
+    wrefresh(win);
 }
 
-void print_next_tile(void){
-    const unsigned tile_size = 4;
-    gotoxy(SIDE_X, 1);
-    printf("NEXT TILE:");
-    gotoxy(SIDE_X, 2);
-    printf("╔══════╗");
-    for (int i = 0; i < 3; i++){
-        gotoxy(SIDE_X, i+3);
-        printf("║      ║");
-    }
-    gotoxy(SIDE_X, tile_size+2);
-    printf("╚══════╝");
-}
+
 
 void update_board(unsigned x, unsigned y){
     // updates board on tile
@@ -103,27 +49,34 @@ void update_board(unsigned x, unsigned y){
 
 void print_tile(unsigned x, unsigned y){
     // print tile on terminal
-    gotoxy(x, y);
-    printf("%c", TILE);
 }
 
-void print_shape(const Shape sh, int x_pos, int y_pos, void(*func)(unsigned, unsigned)){
+void print_shape(const Shape sh, int x_pos, int y_pos, WINDOW *win){
     /* bit-wise AND with shifted one*/
     for(int i = 0; i < 4; i++){         // Row iterating
         for (int j = 0; j < 4; j++){    // Line iterating
             if(sh & (1 << i*4 + j))
-                func(x_pos+j, y_pos+i);
+                mvwaddch(win, y_pos+j, x_pos+i, TILE);
+                waddch(win, TILE);
         }
     }
 }
 
-void print_stats(void){
-    gotoxy(SIDE_X, 10);
-    printf("LEVEL: %d", 0); 
-    gotoxy(SIDE_X, 11); 
-    printf("SCORE: %d", 0); 
-    gotoxy(SIDE_X, 12);
-    printf("BEST: %d", 0);
+void print_next_tile(WINDOW *win, Shape tile){
+    wclear(win);
+    box(win, 0, 0);
+    print_shape(tile, 1, 1, win);
+    wrefresh(win);
+}
+
+void print_stats(WINDOW *win){
+    wmove(win, 0, 0);
+    wprintw(win, "LEVEL: %d", 0); 
+    wmove(win, 1, 0);
+    wprintw(win, "SCORE: %d", 0); 
+    wmove(win, 2, 0);
+    wprintw(win, "BEST: %d", 0);
+    wrefresh(win);
 }
 
 int start_game(void){
@@ -132,10 +85,8 @@ int start_game(void){
                             "    -     -----     -     --      -    ---  \n"
                             "    -     -         -     -  -    -       - \n"
                             "    -     -----     -     -   -   -    ---  \n";
-    printf("%s\n", welcome_sprite);
-    printf("PRESS ENTER TO START");
-    fflush(NULL);
-    return getchar();
+    addstr(welcome_sprite);
+    return getch();
 }
 
 Shape get_next_shape(void) {
@@ -146,8 +97,8 @@ Shape rotate_shape(Shape shape){
     return shape;
 }
 
-move read_user_input(){
-    move result;
+move_choice read_user_input(){
+    move_choice result;
 
     switch (getchar())
     {
@@ -187,14 +138,24 @@ int check_fill_row(){
 }
 
 int main(int argc, char **argv){
-    set_keypress();
+    initscr();      // Initilize ncurses
+    cbreak();       // Raw terminal mode but with few commands 
+    noecho();
+    keypad(stdscr, 1);
+
+    // Windows for each section
+    WINDOW *board_win = newwin(TETRIS_HEIGHT+2, TETRIS_WIDTH*PIXELS_PER_COLUMN+2, 0, 0);
+    WINDOW *next_tile_win = newwin(6, 5*PIXELS_PER_COLUMN, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
+    WINDOW *sidemenu_win = newwin(10, 20, 6, TETRIS_WIDTH*2+4);
 
     if (start_game() != '\n')
     {
-        reset_keypress();
         printf("Good bye");
+        endwin();
         return 0; // Not ENTER, exit
     }
+
+    timeout(0);     // Blocking on getch
 
     Shape current_shape = get_next_shape();
     Shape next_shape = get_next_shape();
@@ -216,7 +177,7 @@ int main(int argc, char **argv){
             next_shape = get_next_shape();
 
         /* Read user input*/
-        move user_input = read_user_input();
+        move_choice user_input = read_user_input();
 
         /* Apply user move */
         switch (user_input){
@@ -235,14 +196,12 @@ int main(int argc, char **argv){
         
         /* Print board */
         clear();
-        print_shape(current_shape, 2, 2, &update_board);
-        print_board();
-        print_next_tile();
-        print_shape(next_shape, SIDE_X+2, 4, &print_tile); 
-        print_stats();
-        return_cursor();
+        print_board(board_win);
+        print_next_tile(next_tile_win, next_shape);
+        print_stats(sidemenu_win);
+        mvwaddstr(sidemenu_win, 5, 0, (char *)&next_shape);
         sleep(1);
     }
-    reset_keypress();
+    endwin();
     return 0;
 }
