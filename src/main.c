@@ -11,7 +11,7 @@
 
 typedef unsigned short tilerow;
 typedef tilerow Shape;
-typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE} move_choice;
+typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE, EXIT } move_choice;
 
 Shape shapes[7] = {
     0x0033,     // Square
@@ -31,9 +31,9 @@ void print_board(WINDOW *win){
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         for (int j = 0; j < TETRIS_WIDTH;  j++){
             if(board[i] & (1 << j)){
-                wmove(win, j, i*2);
-                waddch(win, TILE);
-                waddch(win, TILE);
+                wmove(win, j, i*PIXELS_PER_COLUMN);
+                for (int i = 0; i < PIXELS_PER_COLUMN; i++)
+                    waddch(win, TILE);
             }
         }
     }
@@ -55,9 +55,11 @@ void print_shape(const Shape sh, int x_pos, int y_pos, WINDOW *win){
     /* bit-wise AND with shifted one*/
     for(int i = 0; i < 4; i++){         // Row iterating
         for (int j = 0; j < 4; j++){    // Line iterating
-            if(sh & (1 << i*4 + j))
-                mvwaddch(win, y_pos+j, x_pos+i, TILE);
-                waddch(win, TILE);
+            if(sh & (1 << (i*4 + j))){
+                wmove(win, y_pos+(3-j), x_pos+(PIXELS_PER_COLUMN*(3-i)));
+                for(int i = 0; i < PIXELS_PER_COLUMN; i++)
+                    waddch(win, TILE);
+            }
         }
     }
 }
@@ -100,12 +102,15 @@ Shape rotate_shape(Shape shape){
 move_choice read_user_input(){
     move_choice result;
 
-    switch (getchar())
+    switch (getch())
     {
     case 'a':
         result = MOVE_LEFT;
         break;
     case 'A':
+        result = MOVE_LEFT;
+        break;
+    case KEY_LEFT:
         result = MOVE_LEFT;
         break;
     case 'd':
@@ -114,10 +119,16 @@ move_choice read_user_input(){
     case 'D':
         result = MOVE_RIGHT;
         break;
+    case KEY_RIGHT:
+        result = MOVE_RIGHT;
+        break;
     case 'w':
         result = MOVE_ROTATE;
         break;
     case 'W':
+        result = MOVE_ROTATE;
+        break;
+    case KEY_UP:
         result = MOVE_ROTATE;
         break;
     case 's':
@@ -125,6 +136,11 @@ move_choice read_user_input(){
         break;
     case 'S':
         result = MOVE_DOWN;
+        break;
+    case KEY_DOWN:
+        result = MOVE_DOWN;
+    case '0':
+        result = EXIT;
         break;
     default:
         result = NOMOVE;
@@ -137,21 +153,26 @@ int check_fill_row(){
     return -1;
 }
 
+void finish_program(){
+    printf("Good bye\n");
+    endwin();
+}
+
 int main(int argc, char **argv){
     initscr();      // Initilize ncurses
     cbreak();       // Raw terminal mode but with few commands 
     noecho();
     keypad(stdscr, 1);
+    curs_set(0);    // Remove cursor
 
     // Windows for each section
     WINDOW *board_win = newwin(TETRIS_HEIGHT+2, TETRIS_WIDTH*PIXELS_PER_COLUMN+2, 0, 0);
     WINDOW *next_tile_win = newwin(6, 5*PIXELS_PER_COLUMN, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
-    WINDOW *sidemenu_win = newwin(10, 20, 6, TETRIS_WIDTH*2+4);
+    WINDOW *sidemenu_win = newwin(10, 20, 6, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
 
     if (start_game() != '\n')
     {
-        printf("Good bye");
-        endwin();
+        finish_program();
         return 0; // Not ENTER, exit
     }
 
@@ -159,10 +180,9 @@ int main(int argc, char **argv){
 
     Shape current_shape = get_next_shape();
     Shape next_shape = get_next_shape();
-
-    char input;
-    int speed; // ms
-    int level;
+    
+    // int speed; // ms
+    // int level;
 
     while (1){
         /* Check if row filled when tile grounded*/
@@ -189,19 +209,20 @@ int main(int argc, char **argv){
             break;
         case MOVE_ROTATE:
             break;
+        case EXIT:
+            finish_program();
         case NOMOVE:
             break;
+
         }
         /* Move current tile down if needed*/
         
         /* Print board */
-        clear();
         print_board(board_win);
         print_next_tile(next_tile_win, next_shape);
         print_stats(sidemenu_win);
-        mvwaddstr(sidemenu_win, 5, 0, (char *)&next_shape);
         sleep(1);
     }
-    endwin();
+    finish_program();
     return 0;
 }
