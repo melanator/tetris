@@ -7,7 +7,7 @@
 #define TETRIS_HEIGHT   20
 #define PIXELS_PER_COLUMN 2
 #define TOTAL_WIDTH     80
-#define TILE            'X'
+#define TILE            ACS_DIAMOND
 
 typedef unsigned short tilerow;
 typedef tilerow Shape;
@@ -23,10 +23,7 @@ Shape shapes[7] = {
     0x0036      // Reverse Z-shape
 };
 
-/* Board is a bit-field*/
-tilerow board[TETRIS_HEIGHT] = { 0x0000 };
-
-void print_board(WINDOW *win){
+void print_board(tilerow* board, WINDOW *win){
     box(win, 0, 0);
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         for (int j = 0; j < TETRIS_WIDTH;  j++){
@@ -40,9 +37,7 @@ void print_board(WINDOW *win){
     wrefresh(win);
 }
 
-
-
-void update_board(unsigned x, unsigned y){
+void update_board(tilerow *board, unsigned x, unsigned y){
     // updates board on tile
     board[y] |= (1 << x);
 }
@@ -53,10 +48,10 @@ void print_tile(unsigned x, unsigned y){
 
 void print_shape(const Shape sh, int x_pos, int y_pos, WINDOW *win){
     /* bit-wise AND with shifted one*/
-    for(int i = 0; i < 4; i++){         // Row iterating
-        for (int j = 0; j < 4; j++){    // Line iterating
+    for(int i = 3; i >= 0; i--){         // Row iterating
+        for (int j = 3; j >= 0; j--){    // Line iterating
             if(sh & (1 << (i*4 + j))){
-                wmove(win, y_pos+(3-j), x_pos+(PIXELS_PER_COLUMN*(3-i)));
+                wmove(win, y_pos+(3-i), x_pos+(PIXELS_PER_COLUMN*(3-j)));
                 for(int i = 0; i < PIXELS_PER_COLUMN; i++)
                     waddch(win, TILE);
             }
@@ -65,7 +60,7 @@ void print_shape(const Shape sh, int x_pos, int y_pos, WINDOW *win){
 }
 
 void print_next_tile(WINDOW *win, Shape tile){
-    wclear(win);
+    werase(win);
     box(win, 0, 0);
     print_shape(tile, 1, 1, win);
     wrefresh(win);
@@ -159,6 +154,9 @@ void finish_program(){
 }
 
 int main(int argc, char **argv){
+    /* Board is a bit-field*/
+    tilerow board[TETRIS_HEIGHT] = { 0x0000 };
+
     initscr();      // Initilize ncurses
     cbreak();       // Raw terminal mode but with few commands 
     noecho();
@@ -213,12 +211,12 @@ int main(int argc, char **argv){
             finish_program();
         case NOMOVE:
             break;
-
         }
+
         /* Move current tile down if needed*/
-        
+               
         /* Print board */
-        print_board(board_win);
+        print_board(board, board_win);
         print_next_tile(next_tile_win, next_shape);
         print_stats(sidemenu_win);
         sleep(1);
