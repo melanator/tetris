@@ -12,13 +12,14 @@
 #define SHAPES          7
 
 typedef unsigned short tilerow;
-typedef tilerow Shape;
+typedef tilerow bitmatrix;
 typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE, EXIT } move_choice;
 
-typedef struct CurrentShape {
-    Shape sh;
-    size_t x, y; // Location from bottom row
-} CurrentShape;
+typedef struct Shape {
+    bitmatrix* sh;
+    size_t rots;    // Rotations
+    size_t x, y;    // Location from bottom row
+} Shape;
 
 /*
     Shape is a array of bits stored in 2 bits.
@@ -30,18 +31,18 @@ typedef struct CurrentShape {
     Shapes rotated in CCW direction 
 */
 
-Shape shapes[SHAPES * ROTATIONS] = {
-    0x0033, 0x00cc, 0xcc00, 0x3300,     // Square
+bitmatrix shapes[SHAPES * ROTATIONS] = {
+    0x0033, 0x0033, 0x0033, 0x0033,     // Square
     0x000f, 0x8888, 0xf000, 0x1111,     // Bar
-    0x0027, 0x08c8, 0xe400, 0x1310,    // T-shape
-    0x0047, 0x0c88, 0xe200, 0x1130,  // L -shape
-    0x0017, 0x088c, 0xc800, 0x3110,   // Reverse L-shape
+    0x0027, 0x08c8, 0xe400, 0x1310,     // T-shape
+    0x0047, 0x0c88, 0xe200, 0x1130,     // L -shape
+    0x0017, 0x088c, 0xc800, 0x3110,     // Reverse L-shape
     0x0063, 0x04c8, 0xc600, 0x1320,     // Z-shape
     0x0036, 0x08c4, 0x6c00, 0x2310      // Reverse Z-shape
 };
 
 
-bool bit_shape(Shape sh, int y, int x){
+bool bit_shape(bitmatrix sh, int y, int x){
     return sh & (1 << (y*4 + x));
 }
 
@@ -69,7 +70,7 @@ void print_tile(unsigned x, unsigned y){
     // print tile on terminal
 }
 
-void print_shape(const Shape sh, int x_pos, int y_pos, WINDOW *win){
+void print_shape(const bitmatrix sh, int x_pos, int y_pos, WINDOW *win){
     /* bit-wise AND with shifted one*/
     static int y_offset = 1; // y-offset to print tiles
     static int x_offset = 2; // x-offset to print tiles
@@ -88,7 +89,7 @@ void print_shape(const Shape sh, int x_pos, int y_pos, WINDOW *win){
 void print_next_tile(WINDOW *win, Shape tile){
     werase(win);
     box(win, 0, 0);
-    print_shape(tile, 1, 1, win);
+    print_shape(*tile.sh, 1, 1, win);
     wrefresh(win);
 }
 
@@ -112,13 +113,8 @@ int start_game(void){
     return getch();
 }
 
-Shape get_next_shape(void) {
-    int index = (rand() % SHAPES) * ROTATIONS;
-    return shapes[index];
-}
-
-Shape rotate_shape(Shape shape){
-    return shape;
+void rotate_shape(Shape* shape){
+    shape->sh = (++shape->rots % 4) == 3 ? (shape->sh - 3) : ++shape->sh; 
 }
 
 move_choice read_user_input(){
@@ -183,17 +179,22 @@ void finish_program(){
     endwin();
 }
 
-CurrentShape init_current_shape(Shape sh){
-    CurrentShape result;
-    result.sh = sh;
+Shape init_shape(){
+    Shape result;
+    result.sh = &shapes[(rand() % SHAPES) * ROTATIONS];
     result.y = 0;
     result.x = rand() % TETRIS_WIDTH;  // shape to spawn randomly
+    result.rots = 0;
     // Check for borders
     return result;
 }
 
-void print_current_shape(const CurrentShape* sh, tilerow* board){
+void print_current_shape(const Shape* sh, const tilerow* board){
 
+}
+
+bool check_collisions(){
+    return false;
 }
 
 int main(int argc, char **argv){
@@ -210,6 +211,7 @@ int main(int argc, char **argv){
     WINDOW *board_win = newwin(TETRIS_HEIGHT+2, TETRIS_WIDTH*PIXELS_PER_COLUMN+2, 0, 0);
     WINDOW *next_tile_win = newwin(4, 4*PIXELS_PER_COLUMN, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
     WINDOW *sidemenu_win = newwin(10, 20, 4, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
+    WINDOW *debug_win = newwin(10, 50, 10, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
 
     if (start_game() != '\n')
     {
@@ -219,8 +221,8 @@ int main(int argc, char **argv){
 
     timeout(0);     // Blocking on getch
 
-    Shape current_shape = get_next_shape();
-    Shape next_shape = get_next_shape();
+    Shape current_shape = init_shape();
+    Shape next_shape = init_shape();
     
     // int speed; // ms
     // int level;
@@ -228,14 +230,31 @@ int main(int argc, char **argv){
     while (1){
         /* Check if row filled when tile grounded*/
         int filled_row = check_fill_row();
+
+        if (!check_collisions()) {
+            finish_program();
+        }
+
         while(filled_row != -1){
 
         }
             /* Delete row */
             /* Print new shape on top  */
             /* update next tile*/
-            CurrentShape current_shape = init_current_shape(next_shape);
-            next_shape = get_next_shape();
+            current_shape = next_shape;
+            next_shape = init_shape();
+        
+        #ifdef TETRIS_DEBUG
+            werase(debug_win);
+            wmove(debug_win, 0, 0);
+            wprintw(debug_win, "CS 0x%08x X: %ld Y: %ld R: %ld", *current_shape.sh, 
+                                                            current_shape.x, 
+                                                            current_shape.y, 
+                                                            current_shape.rots); 
+            wmove(debug_win, 1, 0);
+            wprintw(debug_win, "NS 0x%08x X: %ld", *next_shape.sh, next_shape.x); 
+            wrefresh(debug_win);
+        #endif
 
         /* Read user input*/
         move_choice user_input = read_user_input();
