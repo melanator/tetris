@@ -18,7 +18,7 @@ typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE, EXIT } mov
 typedef struct Shape {
     bitmatrix* sh;
     size_t rots;    // Rotations
-    size_t x, y;    // Location from bottom row
+    size_t x, y;    // Location from top row, x for first signifant bit, y for ???
 } Shape;
 
 /*
@@ -40,7 +40,6 @@ bitmatrix shapes[SHAPES * ROTATIONS] = {
     0x0063, 0x04c8, 0xc600, 0x1320,     // Z-shape
     0x0036, 0x08c4, 0x6c00, 0x2310      // Reverse Z-shape
 };
-
 
 bool bit_shape(bitmatrix sh, int y, int x){
     return sh & (1 << (y*4 + x));
@@ -73,12 +72,12 @@ void print_tile(unsigned x, unsigned y){
 void print_shape(const bitmatrix sh, int x_pos, int y_pos, WINDOW *win){
     /* bit-wise AND with shifted one*/
     static int y_offset = 1; // y-offset to print tiles
-    static int x_offset = 2; // x-offset to print tiles
+    static int x_offset = 1; // x-offset to print tiles
 
-    for(int i = 1; i >= 0; i--){         // Row iterating
-        for (int j = 2; j >= 0; j--){    // Line iterating
+    for(int i = 4; i >= 0; i--){         // Row iterating
+        for (int j = 4; j >= 0; j--){    // Line iterating
             if(sh & (1 << (i*4 + j))){
-                wmove(win, y_pos+(y_offset-i), x_pos+(PIXELS_PER_COLUMN*(x_offset-j)));
+                wmove(win, y_pos+y_offset+(4-i), x_pos+(PIXELS_PER_COLUMN*(4-j)+x_offset));
                 for(int i = 0; i < PIXELS_PER_COLUMN; i++)
                     waddch(win, TILE);
             }
@@ -89,7 +88,7 @@ void print_shape(const bitmatrix sh, int x_pos, int y_pos, WINDOW *win){
 void print_next_tile(WINDOW *win, Shape tile){
     werase(win);
     box(win, 0, 0);
-    print_shape(*tile.sh, 1, 1, win);
+    print_shape(*tile.sh, 0, 0, win);
     wrefresh(win);
 }
 
@@ -189,10 +188,6 @@ Shape init_shape(){
     return result;
 }
 
-void print_current_shape(const Shape* sh, const tilerow* board){
-
-}
-
 bool check_collisions(){
     return false;
 }
@@ -209,7 +204,7 @@ int main(int argc, char **argv){
 
     // Windows for each section
     WINDOW *board_win = newwin(TETRIS_HEIGHT+2, TETRIS_WIDTH*PIXELS_PER_COLUMN+2, 0, 0);
-    WINDOW *next_tile_win = newwin(4, 4*PIXELS_PER_COLUMN, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
+    WINDOW *next_tile_win = newwin(4, 6*PIXELS_PER_COLUMN, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
     WINDOW *sidemenu_win = newwin(10, 20, 4, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
     WINDOW *debug_win = newwin(10, 50, 10, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
 
@@ -279,7 +274,7 @@ int main(int argc, char **argv){
                
         /* Print board */
         print_board(board, board_win);
-        print_current_shape(&current_shape, board);
+        print_shape(*current_shape.sh, current_shape.x, current_shape.y, board_win);
         print_next_tile(next_tile_win, next_shape);
         print_stats(sidemenu_win);
         sleep(1);
