@@ -8,8 +8,6 @@
 #define TOTAL_WIDTH     80
 #define TILE            ACS_DIAMOND
 
-typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE, EXIT } move_choice;
-
 int start_game(void);
 void init_game(void);
 void finish_program();

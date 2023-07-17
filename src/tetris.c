@@ -56,3 +56,28 @@ Shape init_shape(){
 bool check_collisions(){
     return false;
 }
+
+bool game_tick(Game* game, move_choice move){
+    proceed_user_input(move);
+    game->current_shape = game->next_shape;
+    game->next_shape = init_shape();
+    return true;
+}   
+
+void proceed_user_input(move_choice user_input){
+    /* Apply user move */
+    switch (user_input){
+    case MOVE_LEFT:
+        break;
+    case MOVE_RIGHT:
+        break;
+    case MOVE_DOWN:
+        break;
+    case MOVE_ROTATE:
+        break;
+    case EXIT:
+        break;
+    case NOMOVE:
+        break;
+    }
+}

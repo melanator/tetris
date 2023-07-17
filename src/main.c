@@ -5,8 +5,16 @@
 #include "tetris.h"
 
 int main(int argc, char **argv){
-    /* Board is a bit-field*/
-    tilerow board[TETRIS_HEIGHT] = { 0x0000 };
+
+    /* Board is a bit-field array of 16*/
+    Board board = { 0x0000 };
+    Game game;
+    game.board = &board;
+    game.current_shape = init_shape();
+    game.next_shape = init_shape();
+
+    bool game_status = true;
+    move_choice user_input = NOMOVE;
 
     init_game();
 
@@ -30,23 +38,16 @@ int main(int argc, char **argv){
     // int speed; // ms
     // int level;
 
-    while (1){
-        /* Check if row filled when tile grounded*/
-        int filled_row = check_fill_row();
+    while (game_status){
 
-        if (!check_collisions()) {
-            finish_program();
-        }
+        game_status = game_tick(&game, user_input);
 
-        while(filled_row != -1){
+        /* Print board */
+        print_board(board, board_win);
+        print_shape(*current_shape.sh, game.current_shape.x, game.current_shape.y, board_win);
+        print_next_tile(next_tile_win, game.next_shape);
+        print_stats(sidemenu_win);
 
-        }
-            /* Delete row */
-            /* Print new shape on top  */
-            /* update next tile*/
-            current_shape = next_shape;
-            next_shape = init_shape();
-        
         #ifdef TETRIS_DEBUG
             werase(debug_win);
             wmove(debug_win, 0, 0);
@@ -62,29 +63,6 @@ int main(int argc, char **argv){
         /* Read user input*/
         move_choice user_input = read_user_input();
 
-        /* Apply user move */
-        switch (user_input){
-        case MOVE_LEFT:
-            break;
-        case MOVE_RIGHT:
-            break;
-        case MOVE_DOWN:
-            break;
-        case MOVE_ROTATE:
-            break;
-        case EXIT:
-            finish_program();
-        case NOMOVE:
-            break;
-        }
-
-        /* Move current tile down if needed*/
-               
-        /* Print board */
-        print_board(board, board_win);
-        print_shape(*current_shape.sh, current_shape.x, current_shape.y, board_win);
-        print_next_tile(next_tile_win, next_shape);
-        print_stats(sidemenu_win);
         sleep(1);
     }
     finish_program();
