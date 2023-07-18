@@ -23,18 +23,50 @@ bitmatrix shapes[SHAPES * ROTATIONS] = {
     0x0036, 0x08c4, 0x6c00, 0x2310      // Reverse Z-shape
 };
 
+// Index of first significant bit
+figure_center shape_centers[SHAPES * ROTATIONS] = {
+    10, 10, 10, 10,     // Square
+    12, 0,  0,  3,      // Bar
+    10, 4,  0,  4,      // T-shape
+    9,  4,  0,  2,      // L -shape
+    11, 4,  0,  2,      // Reverse L-shape
+    9,  5,  0,  4,      // Z-shape
+    10, 4,  1,  2       // Reverse Z-shape
+};
+
+// Fills array with 0's
+void init_board(Board board){
+    for (int i = 0; i < TETRIS_HEIGHT; i++)
+        board[i] = 0x0000;
+}
+
 Game init_game(void){
     Game game;
-
-    for (int i = 0; i < TETRIS_HEIGHT; i++)
-        game.board[i] = 0x0000;
-
+    init_board(game.board);
     game.current_shape = init_shape();
     game.next_shape = init_shape();
     game.points = 0;
     return game;
 }
 
+Figure init_figure(){
+    Figure result;
+    size_t index = (rand() % SHAPES) * ROTATIONS;
+    result.sh = &shapes[index];
+    result.center = &shape_centers[index];
+    return result;
+}
+
+Shape init_shape(){
+    Shape result;
+    result.fig = init_figure();
+    result.loc.y = 0;
+    result.loc.x = rand() % TETRIS_WIDTH;  // shape to spawn randomly
+    result.rots = 0;
+    init_board(result.shape_board);
+    add_to_board(result.shape_board, result, result.loc);
+    return result;
+}
 
 bool bit_shape(bitmatrix sh, int y, int x){
     return sh & (1 << (y*4 + x));
@@ -46,25 +78,25 @@ void update_board(tilerow *board, unsigned x, unsigned y){
 }
 
 void rotate_shape(Shape* shape){
-    shape->sh = (++shape->rots % 4) == 3 ? (shape->sh - 3) : ++shape->sh; 
+    // Moves pointer to next shape, else go back to 3
+    if ((shape->rots)++ % 4){
+        shape->fig.sh = (shape->fig.sh)++;
+        shape->fig.center = (shape->fig.center)++;
+    }
+    else {
+        shape->fig.sh = shape->fig.sh - 3;
+        shape->fig.center = shape->fig.center - 3;
+    }
 }
 
 int check_fill_row(){
     return -1;
 }
 
-void add_to_board(tilerow* board, Shape sh, size_t start_pos){
+void add_to_board(tilerow* board, Shape sh, Location loc){
 }
 
-Shape init_shape(){
-    Shape result;
-    result.sh = &shapes[(rand() % SHAPES) * ROTATIONS];
-    result.y = 0;
-    result.x = rand() % TETRIS_WIDTH;  // shape to spawn randomly
-    result.rots = 0;
-    // Check for borders
-    return result;
-}
+
 
 bool check_collisions(){
     return false;
@@ -78,7 +110,7 @@ void set_next_shapes(Game* game){
 bool game_tick(Game* game, move_choice move){
     proceed_user_input(move);
     return true;
-}   
+}
 
 void proceed_user_input(move_choice user_input){
     /* Apply user move */

@@ -77,10 +77,14 @@ void print_tile(unsigned x, unsigned y){
     // print tile on terminal
 }
 
-void print_shape(const bitmatrix sh, int x_pos, int y_pos, WINDOW *win){
+void print_shape(Shape* shape, WINDOW *win){
     /* bit-wise AND with shifted one*/
     static int y_offset = 1; // y-offset to print tiles
     static int x_offset = 1; // x-offset to print tiles
+
+    const bitmatrix sh = *shape->fig.sh;
+    int x_pos = shape->loc.x;
+    int y_pos = shape->loc.y;
 
     for(int i = 4; i >= 0; i--){         // Row iterating
         for (int j = 4; j >= 0; j--){    // Line iterating
@@ -93,10 +97,16 @@ void print_shape(const bitmatrix sh, int x_pos, int y_pos, WINDOW *win){
     }
 }
 
-void print_next_tile(WINDOW *win, Shape tile){
+void print_next_tile(WINDOW *win, Figure figure){
+    // Temporary Shape
+    Shape next_shape;
+    next_shape.loc.x = 0;
+    next_shape.loc.y = 0;
+    next_shape.fig = figure;
+
     werase(win);
     box(win, 0, 0);
-    print_shape(*tile.sh, 0, 0, win);
+    print_shape(&next_shape, win);
     wrefresh(win);
 }
 

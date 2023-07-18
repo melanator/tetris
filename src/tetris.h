@@ -9,14 +9,24 @@
 typedef unsigned short tilerow;
 typedef tilerow bitmatrix;
 typedef tilerow Board[TETRIS_HEIGHT];
-
+typedef unsigned char figure_center;
 
 typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, EXIT, NOMOVE  } move_choice;
 
-typedef struct Shape {
+typedef struct Location {
+    size_t x, y;
+} Location;
+
+typedef struct Figure {
     bitmatrix* sh;
+    figure_center* center;
+} Figure;
+
+typedef struct Shape {
+    Figure fig;
+    Location loc;
     size_t rots;    // Rotations
-    size_t x, y;    // Location from top row, x for first signifant bit, y for ???
+    Board shape_board;
 } Shape;
 
 typedef struct Game { 
@@ -32,7 +42,8 @@ Game init_game(void);
 
 /* Board manipulations*/
 void update_board(tilerow *board, unsigned x, unsigned y);
-void add_to_board(tilerow* board, Shape sh, size_t start_pos);
+void add_to_board(tilerow* board, Shape sh, Location loc);
+void init_board(Board board);
 
 /* Game manipulations*/
 bool game_tick(Game* game, move_choice move);
@@ -45,5 +56,6 @@ void set_next_shapes(Game* game);
 bool bit_shape(bitmatrix sh, int y, int x);
 void rotate_shape(Shape* shape);
 Shape init_shape();
+Figure init_figure();
 
 #endif // TETRIS_H

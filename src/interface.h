@@ -15,8 +15,8 @@ move_choice read_user_input();
 /* Manipulation with windows */
 void init_ncurses(void);
 void print_tile(unsigned x, unsigned y);
-void print_shape(const bitmatrix sh, int x_pos, int y_pos, WINDOW *win);
-void print_next_tile(WINDOW *win, Shape tile);
+void print_shape(Shape* shape, WINDOW *win);
+void print_next_tile(WINDOW *win, Figure figure);
 void print_stats(WINDOW *win);
 void print_board(tilerow* board, WINDOW *win);
 
