@@ -10,7 +10,7 @@ int start_game(void){
     return getch();
 }
 
-void init_game(void){
+void init_ncurses(void){
     initscr();      // Initilize ncurses
     cbreak();       // Raw terminal mode but with few commands 
     noecho();

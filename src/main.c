@@ -5,18 +5,13 @@
 #include "tetris.h"
 
 int main(int argc, char **argv){
+    init_ncurses();
 
     /* Board is a bit-field array of 16*/
-    Board board = { 0x0000 };
-    Game game;
-    game.board = &board;
-    game.current_shape = init_shape();
-    game.next_shape = init_shape();
+    Game game = init_game();
 
     bool game_status = true;
     move_choice user_input = NOMOVE;
-
-    init_game();
 
     // Windows for each section
     WINDOW *board_win = newwin(TETRIS_HEIGHT+2, TETRIS_WIDTH*PIXELS_PER_COLUMN+2, 0, 0);
@@ -43,7 +38,7 @@ int main(int argc, char **argv){
         game_status = game_tick(&game, user_input);
 
         /* Print board */
-        print_board(board, board_win);
+        print_board(game.board, board_win);
         print_shape(*current_shape.sh, game.current_shape.x, game.current_shape.y, board_win);
         print_next_tile(next_tile_win, game.next_shape);
         print_stats(sidemenu_win);

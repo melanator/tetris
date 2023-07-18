@@ -11,7 +11,7 @@ typedef tilerow bitmatrix;
 typedef tilerow Board[TETRIS_HEIGHT];
 
 
-typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, NOMOVE, EXIT } move_choice;
+typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, EXIT, NOMOVE  } move_choice;
 
 typedef struct Shape {
     bitmatrix* sh;
@@ -20,12 +20,15 @@ typedef struct Shape {
 } Shape;
 
 typedef struct Game { 
-    Board* board; 
+    Board board; 
     Shape current_shape;
     Shape next_shape;
+    unsigned int points;
 } Game;
 
 extern bitmatrix shapes[SHAPES * ROTATIONS];
+
+Game init_game(void);
 
 /* Board manipulations*/
 void update_board(tilerow *board, unsigned x, unsigned y);
@@ -36,6 +39,7 @@ bool game_tick(Game* game, move_choice move);
 bool check_collisions();
 int check_fill_row();
 void proceed_user_input(move_choice user_input);
+void set_next_shapes(Game* game);
 
 /* Tiles manipulations*/
 bool bit_shape(bitmatrix sh, int y, int x);

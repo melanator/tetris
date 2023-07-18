@@ -23,6 +23,19 @@ bitmatrix shapes[SHAPES * ROTATIONS] = {
     0x0036, 0x08c4, 0x6c00, 0x2310      // Reverse Z-shape
 };
 
+Game init_game(void){
+    Game game;
+
+    for (int i = 0; i < TETRIS_HEIGHT; i++)
+        game.board[i] = 0x0000;
+
+    game.current_shape = init_shape();
+    game.next_shape = init_shape();
+    game.points = 0;
+    return game;
+}
+
+
 bool bit_shape(bitmatrix sh, int y, int x){
     return sh & (1 << (y*4 + x));
 }
@@ -57,10 +70,13 @@ bool check_collisions(){
     return false;
 }
 
-bool game_tick(Game* game, move_choice move){
-    proceed_user_input(move);
+void set_next_shapes(Game* game){
     game->current_shape = game->next_shape;
     game->next_shape = init_shape();
+}
+
+bool game_tick(Game* game, move_choice move){
+    proceed_user_input(move);
     return true;
 }   
 
