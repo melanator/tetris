@@ -15,8 +15,8 @@ int main(int argc, char **argv){
 
     // Windows for each section
     WINDOW *board_win = newwin(TETRIS_HEIGHT+2, TETRIS_WIDTH*PIXELS_PER_COLUMN+2, 0, 0);
-    WINDOW *next_tile_win = newwin(4, 6*PIXELS_PER_COLUMN, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
-    WINDOW *sidemenu_win = newwin(10, 20, 4, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
+    WINDOW *next_tile_win = newwin(5, 5*PIXELS_PER_COLUMN+1, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
+    WINDOW *sidemenu_win = newwin(10, 20, 5, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
     WINDOW *debug_win = newwin(10, 50, 10, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
 
     if (start_game() != '\n')
@@ -27,9 +27,6 @@ int main(int argc, char **argv){
 
     timeout(0);     // Blocking on getch
 
-    Shape current_shape = init_shape();
-    Shape next_shape = init_shape();
-    
     // int speed; // ms
     // int level;
 
@@ -38,25 +35,28 @@ int main(int argc, char **argv){
         game_status = game_tick(&game, user_input);
 
         /* Print board */
+        werase(board_win);
         print_board(game.board, board_win);
-        print_shape(&current_shape, board_win);
+        print_board(game.current_shape.shape_board, board_win);
         print_next_tile(next_tile_win, game.next_shape.fig);
         print_stats(sidemenu_win);
 
         #ifdef TETRIS_DEBUG
             werase(debug_win);
             wmove(debug_win, 0, 0);
-            wprintw(debug_win, "CS 0x%08x X: %ld Y: %ld R: %ld", *current_shape.fig.sh, 
-                                                            current_shape.loc.x, 
-                                                            current_shape.loc.y, 
-                                                            current_shape.rots); 
+            wprintw(debug_win, "CS 0x%08x X: %ld Y: %ld R: %ld", *game.current_shape.fig.sh, 
+                                                            game.current_shape.loc.x, 
+                                                            game.current_shape.loc.y, 
+                                                            game.current_shape.rots); 
             wmove(debug_win, 1, 0);
-            wprintw(debug_win, "NS 0x%08x X: %ld", *next_shape.fig.sh, next_shape.loc.x); 
+            wprintw(debug_win, "NS 0x%08x X: %ld", *game.next_shape.fig.sh, game.next_shape.loc.x); 
             wrefresh(debug_win);
         #endif
 
         /* Read user input*/
         move_choice user_input = read_user_input();
+
+        set_next_shapes(&game);
 
         sleep(1);
     }

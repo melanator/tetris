@@ -86,13 +86,11 @@ void print_shape(Shape* shape, WINDOW *win){
     int x_pos = shape->loc.x;
     int y_pos = shape->loc.y;
 
-    for(int i = 4; i >= 0; i--){         // Row iterating
-        for (int j = 4; j >= 0; j--){    // Line iterating
-            if(sh & (1 << (i*4 + j))){
-                wmove(win, y_pos+y_offset+(4-i), x_pos+(PIXELS_PER_COLUMN*(4-j)+x_offset));
-                for(int i = 0; i < PIXELS_PER_COLUMN; i++)
-                    waddch(win, TILE);
-            }
+    for(int i = 15; i >= 0; i--){         // Row iterating
+        if(sh & (1 << i)){
+            wmove(win, 3 - (i / 4), (3 - (i % 4)) * PIXELS_PER_COLUMN + x_offset);
+            for(int i = 0; i < PIXELS_PER_COLUMN; i++)
+                waddch(win, TILE);
         }
     }
 }
@@ -122,10 +120,11 @@ void print_stats(WINDOW *win){
 
 void print_board(tilerow* board, WINDOW *win){
     box(win, 0, 0);
+    static int offset = 1;   // Offset from borders
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         for (int j = 0; j < TETRIS_WIDTH;  j++){
             if(board[i] & (1 << j)){
-                wmove(win, j, i*PIXELS_PER_COLUMN);
+                wmove(win, i + offset, (j * PIXELS_PER_COLUMN) + offset);
                 for (int i = 0; i < PIXELS_PER_COLUMN; i++)
                     waddch(win, TILE);
             }

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
-
+#include <time.h>
 #include "tetris.h"
 
 /*
@@ -51,6 +51,7 @@ Game init_game(void){
 
 Figure init_figure(){
     Figure result;
+    srand(time(NULL));
     size_t index = (rand() % SHAPES) * ROTATIONS;
     result.sh = &shapes[index];
     result.center = &shape_centers[index];
@@ -61,10 +62,11 @@ Shape init_shape(){
     Shape result;
     result.fig = init_figure();
     result.loc.y = 0;
+    srand(time(NULL));
     result.loc.x = rand() % TETRIS_WIDTH;  // shape to spawn randomly
     result.rots = 0;
     init_board(result.shape_board);
-    add_to_board(result.shape_board, result, result.loc);
+    add_to_board(result.shape_board, &result);
     return result;
 }
 
@@ -93,10 +95,31 @@ int check_fill_row(){
     return -1;
 }
 
-void add_to_board(tilerow* board, Shape sh, Location loc){
+void add_to_board(tilerow* board, const Shape* sh){
+    int start_line = (*(sh->fig.center) / 4);    // Row of bitmatrix from which we start
+    int start_cell = (*(sh->fig.center) % 4);
+    int iters = 4 - start_line;                  // How many iterations we will do
+    bitmatrix pixels = *(sh->fig.sh);
+
+    static bitmatrix masks[4] = {
+        0xf000, 0x0f00, 0x00f0, 0x000f
+    };
+    
+    for (int i = 0; i < iters; i++){
+        // get 2 bytes
+        bitmatrix shifted = (pixels & masks[start_line]) << start_cell; // apply mask and put first 1 to leftmost position
+
+        // shift to end
+        shifted >>= 12 - (start_line++ * 4);
+
+        // shift to needed position
+        shifted <<= TETRIS_WIDTH - sh->loc.x;
+        
+        // bitwise or
+        board[i + sh->loc.y] |= shifted;
+        
+    }
 }
-
-
 
 bool check_collisions(){
     return false;

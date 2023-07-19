@@ -42,7 +42,7 @@ Game init_game(void);
 
 /* Board manipulations*/
 void update_board(tilerow *board, unsigned x, unsigned y);
-void add_to_board(tilerow* board, Shape sh, Location loc);
+void add_to_board(tilerow* board, const Shape* sh);
 void init_board(Board board);
 
 /* Game manipulations*/
