@@ -1,11 +1,20 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "interface.h"
 #include "tetris.h"
 
 int main(int argc, char **argv){
     init_ncurses();
+    struct timespec tw = {0, 100000000};
+    struct timespec tr;
+
+    if (start_game() != '\n')
+    {
+        finish_program();
+        return 0; // Not ENTER, exit
+    }
 
     /* Board is a bit-field array of 16*/
     Game game = init_game();
@@ -18,12 +27,6 @@ int main(int argc, char **argv){
     WINDOW *next_tile_win = newwin(5, 5*PIXELS_PER_COLUMN+1, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
     WINDOW *sidemenu_win = newwin(10, 20, 5, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
     WINDOW *debug_win = newwin(10, 50, 10, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
-
-    if (start_game() != '\n')
-    {
-        finish_program();
-        return 0; // Not ENTER, exit
-    }
 
     timeout(0);     // Blocking on getch
 
@@ -58,9 +61,9 @@ int main(int argc, char **argv){
         /* Read user input*/
         move_choice user_input = read_user_input();
 
-        set_next_shapes(&game);
+        //set_next_shapes(&game);
 
-        sleep(1);
+        nanosleep(&tw, &tr);
     }
     finish_program();
     return 0;

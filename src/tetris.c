@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include "tetris.h"
-
+#include "utils.h"
 /*
     Shape is a array of bits stored in 2 bits.
     Representation for square
@@ -57,6 +57,10 @@ Game init_game(void){
     game.current_shape = init_shape();
     game.next_shape = init_shape();
     game.points = 0;
+    
+    game.level.level = 1;
+    game.level.speed = 1000000000; // in ns
+    game.level.last_tick = get_timestamp();
     return game;
 }
 
@@ -92,6 +96,19 @@ void update_board(tilerow *board, unsigned x, unsigned y){
     board[y] |= (1 << x);
 }
 
+/* Return true if falls to the end */
+bool fall_shape(Shape* shape){
+    if((shape->loc.y + shape->fig.size->y) >= TETRIS_HEIGHT){
+        return true;   
+    }
+    else {
+        shape->loc.y++;
+        init_board(shape->shape_board);
+        add_to_board(shape->shape_board, shape);
+        return false;
+    }
+}
+
 void rotate_shape(Shape* shape){
     // Moves pointer to next shape, else go back to 3
     if ((shape->rots)++ % 4){
@@ -110,6 +127,7 @@ int check_fill_row(){
     return -1;
 }
 
+/* Adds shape to board by some bitwise manipulations */
 void add_to_board(tilerow* board, const Shape* sh){
     int start_line = *(sh->fig.center) / 4;    // Row of bitmatrix from which we start
     int start_cell = *(sh->fig.center) % 4;
@@ -132,11 +150,19 @@ void add_to_board(tilerow* board, const Shape* sh){
         
         // bitwise or
         board[i + sh->loc.y] |= shifted;
-        
     }
 }
 
-bool check_collisions(){
+void merge_boards(tilerow* lhs, tilerow* rhs){
+    for (int i = 0; i < TETRIS_HEIGHT; i++)
+        lhs[i] |= rhs[i];
+}
+
+bool check_collisions(tilerow* lhs, tilerow* rhs){
+    for (int i = 0; i < TETRIS_HEIGHT; i++){
+        if(lhs[i] & rhs[i])
+            return true;
+    }
     return false;
 }
 
@@ -145,7 +171,24 @@ void set_next_shapes(Game* game){
     game->next_shape = init_shape();
 }
 
+bool is_time_to_gravity(Level* level){
+    size_t gap = get_timestamp() - level->last_tick;
+    return (gap > level->speed);
+}
+
+
+void gravity_tick(Game* game){
+    if (is_time_to_gravity(&game->level)) {
+        game->level.last_tick = get_timestamp();
+        bool falled_to_ground = fall_shape(&game->current_shape);
+        // Check collision after falling
+        if (falled_to_ground || check_collisions(game->board, game->current_shape.shape_board))
+            set_next_shapes(game);
+    }
+}
+
 bool game_tick(Game* game, move_choice move){
+    gravity_tick(game);
     proceed_user_input(move);
     return true;
 }

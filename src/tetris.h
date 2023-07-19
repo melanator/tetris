@@ -18,6 +18,11 @@ typedef struct Location {
 } Location;
 typedef Location Size;
 
+typedef struct Level {
+    size_t level, speed;
+    size_t last_tick;
+} Level;
+
 typedef struct Figure {
     bitmatrix* sh;
     figure_center* center;
@@ -35,10 +40,9 @@ typedef struct Game {
     Board board; 
     Shape current_shape;
     Shape next_shape;
+    Level level;
     unsigned int points;
 } Game;
-
-extern bitmatrix shapes[SHAPES * ROTATIONS];
 
 Game init_game(void);
 
@@ -46,17 +50,21 @@ Game init_game(void);
 void update_board(tilerow *board, unsigned x, unsigned y);
 void add_to_board(tilerow* board, const Shape* sh);
 void init_board(Board board);
+void merge_boards(tilerow* lhs, tilerow* rhs);
+bool check_collisions(tilerow* lhs, tilerow* rhs);
 
 /* Game manipulations*/
 bool game_tick(Game* game, move_choice move);
-bool check_collisions();
 int check_fill_row();
 void proceed_user_input(move_choice user_input);
 void set_next_shapes(Game* game);
+void gravity_tick(Game* game);
+bool is_time_to_gravity(Level* level);
 
 /* Tiles manipulations*/
 bool bit_shape(bitmatrix sh, int y, int x);
 void rotate_shape(Shape* shape);
+bool fall_shape(Shape* shape);
 Shape init_shape();
 Figure init_figure();
 
