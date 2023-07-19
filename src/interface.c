@@ -79,16 +79,13 @@ void print_tile(unsigned x, unsigned y){
 
 void print_shape(Shape* shape, WINDOW *win){
     /* bit-wise AND with shifted one*/
-    static int y_offset = 1; // y-offset to print tiles
-    static int x_offset = 1; // x-offset to print tiles
+    static int offset = 1; // offset to print tiles
 
     const bitmatrix sh = *shape->fig.sh;
-    int x_pos = shape->loc.x;
-    int y_pos = shape->loc.y;
 
     for(int i = 15; i >= 0; i--){         // Row iterating
         if(sh & (1 << i)){
-            wmove(win, 3 - (i / 4), (3 - (i % 4)) * PIXELS_PER_COLUMN + x_offset);
+            wmove(win, 3 - (i / 4), (3 - (i % 4)) * PIXELS_PER_COLUMN + offset);
             for(int i = 0; i < PIXELS_PER_COLUMN; i++)
                 waddch(win, TILE);
         }
@@ -124,11 +121,26 @@ void print_board(tilerow* board, WINDOW *win){
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         for (int j = 0; j < TETRIS_WIDTH;  j++){
             if(board[i] & (1 << j)){
-                wmove(win, i + offset, (j * PIXELS_PER_COLUMN) + offset);
+                wmove(win, i + offset, ((15 - j) * PIXELS_PER_COLUMN) + offset);
                 for (int i = 0; i < PIXELS_PER_COLUMN; i++)
                     waddch(win, TILE);
             }
         }
+    }
+    wrefresh(win);
+}
+
+void print_rulers(WINDOW *win){
+    wmove(win, 0, 1);
+    wprintw(win, "0 1 2 3 4 5 6 7 8 9 a b c d e f ");
+    wmove(win, TETRIS_HEIGHT+1, 1);
+    wprintw(win, "0 1 2 3 4 5 6 7 8 9 a b c d e f ");
+    for (int i = 0; i < TETRIS_HEIGHT; i++){
+        char ch = (i % 10) + 48;
+        wmove(win, i+1, 0);
+        waddch(win, ch);
+        wmove(win, i+1, TETRIS_WIDTH * PIXELS_PER_COLUMN + 1);
+        waddch(win, ch);
     }
     wrefresh(win);
 }

@@ -16,10 +16,12 @@ typedef enum { MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_ROTATE, EXIT, NOMOVE  } mo
 typedef struct Location {
     size_t x, y;
 } Location;
+typedef Location Size;
 
 typedef struct Figure {
     bitmatrix* sh;
     figure_center* center;
+    Size* size;
 } Figure;
 
 typedef struct Shape {

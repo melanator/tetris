@@ -20,4 +20,8 @@ void print_next_tile(WINDOW *win, Figure figure);
 void print_stats(WINDOW *win);
 void print_board(tilerow* board, WINDOW *win);
 
+
+/* Debug windows */
+void print_rulers(WINDOW* win);
+
 #endif

@@ -51,6 +51,8 @@ int main(int argc, char **argv){
             wmove(debug_win, 1, 0);
             wprintw(debug_win, "NS 0x%08x X: %ld", *game.next_shape.fig.sh, game.next_shape.loc.x); 
             wrefresh(debug_win);
+
+            print_rulers(board_win);
         #endif
 
         /* Read user input*/

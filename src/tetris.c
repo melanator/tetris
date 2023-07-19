@@ -23,15 +23,26 @@ bitmatrix shapes[SHAPES * ROTATIONS] = {
     0x0036, 0x08c4, 0x6c00, 0x2310      // Reverse Z-shape
 };
 
-// Index of first significant bit
+// Shape start then size to left and bottom
 figure_center shape_centers[SHAPES * ROTATIONS] = {
     10, 10, 10, 10,     // Square
     12, 0,  0,  3,      // Bar
-    10, 4,  0,  4,      // T-shape
+    9,  4,  0,  2,      // T-shape
     9,  4,  0,  2,      // L -shape
-    11, 4,  0,  2,      // Reverse L-shape
-    9,  5,  0,  4,      // Z-shape
-    10, 4,  1,  2       // Reverse Z-shape
+    9,  4,  0,  2,      // Reverse L-shape
+    9,  4,  0,  3,      // Z-shape
+    9,  4,  0,  3       // Reverse Z-shape
+};
+
+// Index of first significant bit
+Size shape_sizes[SHAPES * ROTATIONS] = {
+    {2, 2}, {2, 2}, {2, 2}, {2, 2},      // Square
+    {4, 1}, {1, 4}, {4, 1}, {1, 4},      // Bar
+    {3, 2}, {2, 3}, {3, 2}, {2, 3},      // T-shape
+    {3, 2}, {2, 3}, {3, 2}, {2, 3},      // L -shape
+    {3, 2}, {2, 3}, {3, 2}, {2, 3},      // Reverse L -shape
+    {3, 2}, {2, 3}, {3, 2}, {2, 3},      // Reverse Z -shape
+    {3, 2}, {2, 3}, {3, 2}, {2, 3}       // Reverse Z -shape
 };
 
 // Fills array with 0's
@@ -55,6 +66,7 @@ Figure init_figure(){
     size_t index = (rand() % SHAPES) * ROTATIONS;
     result.sh = &shapes[index];
     result.center = &shape_centers[index];
+    result.size = &shape_sizes[index];
     return result;
 }
 
@@ -63,7 +75,8 @@ Shape init_shape(){
     result.fig = init_figure();
     result.loc.y = 0;
     srand(time(NULL));
-    result.loc.x = rand() % TETRIS_WIDTH;  // shape to spawn randomly
+    result.loc.x = rand() % (TETRIS_WIDTH - result.fig.size->x);  // shape to spawn randomly
+    //result.loc.x = 0; // shape to spawn randomly
     result.rots = 0;
     init_board(result.shape_board);
     add_to_board(result.shape_board, &result);
@@ -84,10 +97,12 @@ void rotate_shape(Shape* shape){
     if ((shape->rots)++ % 4){
         shape->fig.sh = (shape->fig.sh)++;
         shape->fig.center = (shape->fig.center)++;
+        shape->fig.size = (shape->fig.size)++;
     }
     else {
         shape->fig.sh = shape->fig.sh - 3;
         shape->fig.center = shape->fig.center - 3;
+        shape->fig.size = shape->fig.size - 3;
     }
 }
 
@@ -96,8 +111,8 @@ int check_fill_row(){
 }
 
 void add_to_board(tilerow* board, const Shape* sh){
-    int start_line = (*(sh->fig.center) / 4);    // Row of bitmatrix from which we start
-    int start_cell = (*(sh->fig.center) % 4);
+    int start_line = *(sh->fig.center) / 4;    // Row of bitmatrix from which we start
+    int start_cell = *(sh->fig.center) % 4;
     int iters = 4 - start_line;                  // How many iterations we will do
     bitmatrix pixels = *(sh->fig.sh);
 
@@ -113,7 +128,7 @@ void add_to_board(tilerow* board, const Shape* sh){
         shifted >>= 12 - (start_line++ * 4);
 
         // shift to needed position
-        shifted <<= TETRIS_WIDTH - sh->loc.x;
+        shifted <<= TETRIS_WIDTH - 4 - sh->loc.x;
         
         // bitwise or
         board[i + sh->loc.y] |= shifted;
