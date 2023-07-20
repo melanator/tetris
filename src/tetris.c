@@ -55,6 +55,7 @@ Game init_game(void){
     Game game;
     init_board(game.board);
     game.current_shape = init_shape();
+    
     game.next_shape = init_shape();
     game.points = 0;
     
@@ -97,10 +98,14 @@ void update_board(tilerow *board, unsigned x, unsigned y){
 }
 
 /* Return true if falls to the end */
-bool fall_shape(Shape* shape){
-    if((shape->loc.y + shape->fig.size->y) >= TETRIS_HEIGHT){
+bool fall_shape(Game* game, Shape* shape){
+    size_t current_row = shape->loc.y + shape->fig.size->y - 1;
+    if (current_row == 19)
+        return true;
+
+    if(check_colliision_below(shape->shape_board[current_row], game->board[current_row + 1]))
         return true;   
-    }
+    
     else {
         shape->loc.y++;
         init_board(shape->shape_board);
@@ -109,7 +114,7 @@ bool fall_shape(Shape* shape){
     }
 }
 
-void rotate_shape(Shape* shape){
+void rotate_shape(Game* game, Shape* shape){
     // Moves pointer to next shape, else go back to 3
     if ((shape->rots)++ % 4){
         shape->fig.sh = (shape->fig.sh)++;
@@ -177,23 +182,39 @@ bool is_time_to_gravity(Level* level){
 }
 
 
-void gravity_tick(Game* game){
+bool gravity_tick(Game* game){
     if (is_time_to_gravity(&game->level)) {
         game->level.last_tick = get_timestamp();
-        bool falled_to_ground = fall_shape(&game->current_shape);
-        // Check collision after falling
-        if (falled_to_ground || check_collisions(game->board, game->current_shape.shape_board))
-            set_next_shapes(game);
+        return true;
     }
+    return false;
 }
 
 bool game_tick(Game* game, move_choice move){
-    gravity_tick(game);
-    proceed_user_input(move);
+    bool no_next_fall;
+
+    if (gravity_tick(game))
+        no_next_fall = fall_shape(game, &game->current_shape);
+    
+    if (no_next_fall){
+        add_to_board(game->board, &game->current_shape);
+        set_next_shapes(game);
+    }
+
+    proceed_user_input(game, move);
+
+
     return true;
 }
 
-void proceed_user_input(move_choice user_input){
+bool finish_game(Game* game){
+    tilerow result = game->board[0];
+    for (int i = 1; i < TETRIS_HEIGHT; i++)
+        result &= game->board[i];
+    return result;
+}
+
+void proceed_user_input(Game* game, move_choice user_input){
     /* Apply user move */
     switch (user_input){
     case MOVE_LEFT:
@@ -201,7 +222,7 @@ void proceed_user_input(move_choice user_input){
     case MOVE_RIGHT:
         break;
     case MOVE_DOWN:
-        break;
+        fall_shape(game, &game->current_shape);
     case MOVE_ROTATE:
         break;
     case EXIT:
@@ -209,4 +230,8 @@ void proceed_user_input(move_choice user_input){
     case NOMOVE:
         break;
     }
+}
+
+bool check_colliision_below(tilerow top, tilerow bottom){
+    return top & bottom;
 }

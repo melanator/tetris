@@ -23,8 +23,9 @@ void finish_program(){
     endwin();
 }
 
-move_choice read_user_input(){
+inline move_choice read_user_input(int* input){
     move_choice result;
+    fflush(stdin);
 
     switch (getch())
     {

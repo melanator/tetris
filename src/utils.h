@@ -7,5 +7,6 @@
 #include <time.h>   // `timespec_get()`
 
 unsigned long get_timestamp();
+void sleep_ms(size_t time);
 
 #endif // UTILS_H

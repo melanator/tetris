@@ -53,19 +53,25 @@ void init_board(Board board);
 void merge_boards(tilerow* lhs, tilerow* rhs);
 bool check_collisions(tilerow* lhs, tilerow* rhs);
 
+/* Collisions checks */
+bool check_colliision_below(tilerow top, tilerow bottom);
+
 /* Game manipulations*/
 bool game_tick(Game* game, move_choice move);
 int check_fill_row();
-void proceed_user_input(move_choice user_input);
 void set_next_shapes(Game* game);
-void gravity_tick(Game* game);
+bool gravity_tick(Game* game);
 bool is_time_to_gravity(Level* level);
+bool finish_game(Game* game);
 
 /* Tiles manipulations*/
 bool bit_shape(bitmatrix sh, int y, int x);
-void rotate_shape(Shape* shape);
-bool fall_shape(Shape* shape);
 Shape init_shape();
 Figure init_figure();
+
+/* Commands */
+void proceed_user_input(Game* game, move_choice user_input);
+void rotate_shape(Game* game, Shape* shape);
+bool fall_shape(Game* game, Shape* shape);
 
 #endif // TETRIS_H

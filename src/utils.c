@@ -1,7 +1,7 @@
 #include "utils.h"
 
 /// Convert seconds to milliseconds
-#define SEC_TO_MS(sec) ((sec)*1000)
+#define SEC_TO_MS(sec) ((sec)*1000000000)
 
 unsigned long get_timestamp(){
     uint64_t milliseconds;
@@ -20,4 +20,11 @@ unsigned long get_timestamp(){
     }
 
     return milliseconds;
+}
+
+void sleep_ms(size_t time){
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = time * 1000 * 1000;
+    nanosleep(&ts, NULL);
 }

@@ -4,9 +4,11 @@
 
 #include "interface.h"
 #include "tetris.h"
+#include "utils.h"
 
 int main(int argc, char **argv){
     init_ncurses();
+    int input;
     struct timespec tw = {0, 100000000};
     struct timespec tr;
 
@@ -53,16 +55,16 @@ int main(int argc, char **argv){
                                                             game.current_shape.rots); 
             wmove(debug_win, 1, 0);
             wprintw(debug_win, "NS 0x%08x X: %ld", *game.next_shape.fig.sh, game.next_shape.loc.x); 
+            wmove(debug_win, 2, 0);
+            wprintw(debug_win, "Input: %d", input); 
             wrefresh(debug_win);
-
             print_rulers(board_win);
         #endif
 
         /* Read user input*/
-        move_choice user_input = read_user_input();
+        user_input = read_user_input(&input);
 
         //set_next_shapes(&game);
-
         nanosleep(&tw, &tr);
     }
     finish_program();

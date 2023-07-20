@@ -10,7 +10,7 @@
 
 int start_game(void);
 void finish_program();
-move_choice read_user_input();
+move_choice read_user_input(int* input);
 
 /* Manipulation with windows */
 void init_ncurses(void);
