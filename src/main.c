@@ -9,8 +9,6 @@
 int main(int argc, char **argv){
     init_ncurses();
     int input;
-    struct timespec tw = {0, 100000000};
-    struct timespec tr;
 
     if (start_game() != '\n')
     {
@@ -27,8 +25,8 @@ int main(int argc, char **argv){
     // Windows for each section
     WINDOW *board_win = newwin(TETRIS_HEIGHT+2, TETRIS_WIDTH*PIXELS_PER_COLUMN+2, 0, 0);
     WINDOW *next_tile_win = newwin(5, 5*PIXELS_PER_COLUMN+1, 0, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
-    WINDOW *sidemenu_win = newwin(10, 20, 5, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
-    WINDOW *debug_win = newwin(10, 50, 10, TETRIS_WIDTH*PIXELS_PER_COLUMN+2);
+    WINDOW *sidemenu_win = newwin(10, 20, 5, TETRIS_WIDTH*PIXELS_PER_COLUMN+3);
+    WINDOW *debug_win = newwin(10, 50, 10, TETRIS_WIDTH*PIXELS_PER_COLUMN+3);
 
     timeout(0);     // Blocking on getch
 
@@ -65,7 +63,7 @@ int main(int argc, char **argv){
         user_input = read_user_input(&input);
 
         //set_next_shapes(&game);
-        nanosleep(&tw, &tr);
+        sleep_ms(50);
     }
     finish_program();
     return 0;

@@ -70,8 +70,10 @@ Shape init_shape();
 Figure init_figure();
 
 /* Commands */
+bool finish_tile(Game* game);
 void proceed_user_input(Game* game, move_choice user_input);
 void rotate_shape(Game* game, Shape* shape);
 bool fall_shape(Game* game, Shape* shape);
+bool free_fall_shape(Game* game, Shape* shape);
 
 #endif // TETRIS_H

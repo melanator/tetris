@@ -56,7 +56,9 @@ Game init_game(void){
     init_board(game.board);
     game.current_shape = init_shape();
     
+    sleep_ms(15); // Sleep for 15 ms to generate new seed
     game.next_shape = init_shape();
+
     game.points = 0;
     
     game.level.level = 1;
@@ -67,7 +69,7 @@ Game init_game(void){
 
 Figure init_figure(){
     Figure result;
-    srand(time(NULL));
+    srand(get_timestamp());
     size_t index = (rand() % SHAPES) * ROTATIONS;
     result.sh = &shapes[index];
     result.center = &shape_centers[index];
@@ -77,11 +79,12 @@ Figure init_figure(){
 
 Shape init_shape(){
     Shape result;
+    srand(get_timestamp());
+
     result.fig = init_figure();
     result.loc.y = 0;
-    srand(time(NULL));
     result.loc.x = rand() % (TETRIS_WIDTH - result.fig.size->x);  // shape to spawn randomly
-    //result.loc.x = 0; // shape to spawn randomly
+    // result.loc.x = 0; // shape to spawn randomly for debug
     result.rots = 0;
     init_board(result.shape_board);
     add_to_board(result.shape_board, &result);
@@ -112,6 +115,14 @@ bool fall_shape(Game* game, Shape* shape){
         add_to_board(shape->shape_board, shape);
         return false;
     }
+}
+
+// Fall till the end
+bool free_fall_shape(Game* game, Shape* shape){
+    bool is_reached_end = false;
+    while (!is_reached_end)
+        is_reached_end = fall_shape(game, shape);
+    return true;
 }
 
 void rotate_shape(Game* game, Shape* shape){
@@ -191,19 +202,22 @@ bool gravity_tick(Game* game){
 }
 
 bool game_tick(Game* game, move_choice move){
-    bool no_next_fall;
+    bool is_reached_bottom;
 
     if (gravity_tick(game))
-        no_next_fall = fall_shape(game, &game->current_shape);
+        is_reached_bottom = fall_shape(game, &game->current_shape);
     
-    if (no_next_fall){
-        add_to_board(game->board, &game->current_shape);
-        set_next_shapes(game);
-    }
+    if (is_reached_bottom)
+        finish_tile(game);   
 
     proceed_user_input(game, move);
 
+    return true;
+}
 
+bool finish_tile(Game* game){
+    add_to_board(game->board, &game->current_shape);
+    set_next_shapes(game);
     return true;
 }
 
@@ -222,7 +236,9 @@ void proceed_user_input(Game* game, move_choice user_input){
     case MOVE_RIGHT:
         break;
     case MOVE_DOWN:
-        fall_shape(game, &game->current_shape);
+        free_fall_shape(game, &game->current_shape);
+        finish_tile(game);
+        break;
     case MOVE_ROTATE:
         break;
     case EXIT:

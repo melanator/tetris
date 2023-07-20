@@ -23,7 +23,7 @@ unsigned long get_timestamp(){
 }
 
 void sleep_ms(size_t time){
-    struct timespec ts;
+    static struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = time * 1000 * 1000;
     nanosleep(&ts, NULL);

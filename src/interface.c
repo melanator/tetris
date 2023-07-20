@@ -25,9 +25,11 @@ void finish_program(){
 
 inline move_choice read_user_input(int* input){
     move_choice result;
-    fflush(stdin);
+    int symbol;
 
-    switch (getch())
+    fflush(stdin);  
+
+    switch (symbol = getch())
     {
     case 'a':
         result = MOVE_LEFT;
@@ -71,6 +73,7 @@ inline move_choice read_user_input(int* input){
         result = NOMOVE;
     }
     fflush(stdin);
+    *input = symbol;
     return result;
 }
 
