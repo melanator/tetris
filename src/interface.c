@@ -150,3 +150,12 @@ void print_rulers(WINDOW *win){
     }
     wrefresh(win);
 }
+
+int finish_window(Game* game, WINDOW* win){
+    timeout(-1);
+    werase(win);
+    wmove(win, 1, 1);
+    wprintw(win, "GAME OVER\nYour score: %d\nPress any key to EXIT", game->points);
+    wrefresh(win);
+    return getch();
+}

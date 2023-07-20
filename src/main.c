@@ -61,6 +61,7 @@ int main(int argc, char **argv){
 
         sleep_ms(10);
     }
+    finish_window(&game, debug_win);
     finish_program();
     return 0;
 }

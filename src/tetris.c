@@ -18,9 +18,9 @@ bitmatrix shapes[SHAPES * ROTATIONS] = {
     0x000f, 0x8888, 0xf000, 0x1111,     // Bar
     0x0027, 0x08c8, 0xe400, 0x1310,     // T-shape
     0x0047, 0x0c88, 0xe200, 0x1130,     // L -shape
-    0x0017, 0x088c, 0xc800, 0x3110,     // Reverse L-shape
-    0x0063, 0x04c8, 0xc600, 0x1320,     // Z-shape
-    0x0036, 0x08c4, 0x6c00, 0x2310      // Reverse Z-shape
+    0x0017, 0x088c, 0xe800, 0x3110,     // Reverse L-shape
+    0x0063, 0x04c8, 0x0063, 0x04c8,     // Z-shape
+    0x0036, 0x08c4, 0x0036, 0x08c4      // Reverse Z-shape
 };
 
 // Shape start then size to left and bottom
@@ -30,8 +30,8 @@ figure_center shape_centers[SHAPES * ROTATIONS] = {
     9,  4,  0,  2,      // T-shape
     9,  4,  0,  2,      // L -shape
     9,  4,  0,  2,      // Reverse L-shape
-    9,  4,  0,  3,      // Z-shape
-    9,  4,  0,  3       // Reverse Z-shape
+    9,  4,  9,  4,      // Z-shape
+    9,  4,  9,  4       // Reverse Z-shape
 };
 
 // Index of first significant bit
@@ -41,7 +41,7 @@ Size shape_sizes[SHAPES * ROTATIONS] = {
     {3, 2}, {2, 3}, {3, 2}, {2, 3},      // T-shape
     {3, 2}, {2, 3}, {3, 2}, {2, 3},      // L -shape
     {3, 2}, {2, 3}, {3, 2}, {2, 3},      // Reverse L -shape
-    {3, 2}, {2, 3}, {3, 2}, {2, 3},      // Reverse Z -shape
+    {3, 2}, {2, 3}, {3, 2}, {2, 3},      // Z -shape
     {3, 2}, {2, 3}, {3, 2}, {2, 3}       // Reverse Z -shape
 };
 
@@ -71,6 +71,7 @@ Figure init_figure(){
     Figure result;
     srand(get_timestamp());
     size_t index = (rand() % SHAPES) * ROTATIONS;
+    //size_t index = 5 * ROTATIONS;
     result.sh = &shapes[index];
     result.center = &shape_centers[index];
     result.size = &shape_sizes[index];
@@ -126,18 +127,22 @@ bool free_fall_shape(Game* game, Shape* shape){
     return true;
 }
 
-void rotate_shape(Game* game, Shape* shape){
+bool rotate_shape(Game* game, Shape* shape){
     // Moves pointer to next shape, else go back to 3
-    if ((shape->rots)++ % 4){
-        shape->fig.sh = (shape->fig.sh)++;
-        shape->fig.center = (shape->fig.center)++;
-        shape->fig.size = (shape->fig.size)++;
+    if (++(shape->rots) % 4){
+        shape->fig.sh++;
+        shape->fig.center++;
+        shape->fig.size++;
     }
     else {
         shape->fig.sh = shape->fig.sh - 3;
         shape->fig.center = shape->fig.center - 3;
         shape->fig.size = shape->fig.size - 3;
     }
+
+    init_board(shape->shape_board);
+    add_to_board(shape->shape_board, shape);
+    return true;
 }
 
 int check_fill_row(){
@@ -206,6 +211,9 @@ bool gravity_tick(Game* game){
 }
 
 bool game_tick(Game* game, move_choice move){
+    if (finish_game(game))
+        return false;
+
     bool is_reached_bottom = true;
 
     if (gravity_tick(game))
@@ -227,9 +235,12 @@ bool finish_tile(Game* game){
 }
 
 bool finish_game(Game* game){
-    tilerow result = game->board[0];
-    for (int i = 1; i < TETRIS_HEIGHT; i++)
-        result &= game->board[i];
+    bool result = true;
+    for (int i = TETRIS_HEIGHT - 1; i >= 0; i--){
+        if (!result)
+            return result;
+        result = game->board[i] > 0;
+    }
     return result;
 }
 
@@ -250,6 +261,7 @@ bool proceed_user_input(Game* game, move_choice user_input){
         refresh_window = true;
         break;
     case MOVE_ROTATE:
+        refresh_window = rotate_shape(game, &game->current_shape);
         break;
     case EXIT:
         break;

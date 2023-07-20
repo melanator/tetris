@@ -9,6 +9,8 @@
 #define TILE            ACS_DIAMOND
 
 int start_game(void);
+int finish_window(Game* game, WINDOW* win);
+
 void finish_program();
 move_choice read_user_input(int* input);
 
