@@ -77,10 +77,6 @@ inline move_choice read_user_input(int* input){
     return result;
 }
 
-void print_tile(unsigned x, unsigned y){
-    // print tile on terminal
-}
-
 void print_shape(Shape* shape, WINDOW *win){
     /* bit-wise AND with shifted one*/
     static int offset = 1; // offset to print tiles
@@ -120,7 +116,13 @@ void print_stats(WINDOW *win){
 }
 
 void print_board(tilerow* board, WINDOW *win){
+
+#   ifdef TETRIS_DEBUG
+    print_rulers(win);      // Rulers for debugging
+#   else
     box(win, 0, 0);
+#   endif
+
     static int offset = 1;   // Offset from borders
     for (int i = 0; i < TETRIS_HEIGHT; i++){
         for (int j = 0; j < TETRIS_WIDTH;  j++){

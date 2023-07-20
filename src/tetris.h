@@ -63,6 +63,8 @@ void set_next_shapes(Game* game);
 bool gravity_tick(Game* game);
 bool is_time_to_gravity(Level* level);
 bool finish_game(Game* game);
+int count_filled_lines(tilerow* board);
+void clear_line(tilerow* board);
 
 /* Tiles manipulations*/
 bool bit_shape(bitmatrix sh, int y, int x);
@@ -71,9 +73,15 @@ Figure init_figure();
 
 /* Commands */
 bool finish_tile(Game* game);
-void proceed_user_input(Game* game, move_choice user_input);
+bool proceed_user_input(Game* game, move_choice user_input);
 void rotate_shape(Game* game, Shape* shape);
+bool move_left(Game* game, Shape* shape);
+bool move_right(Game* game, Shape* shape);
 bool fall_shape(Game* game, Shape* shape);
 bool free_fall_shape(Game* game, Shape* shape);
+
+/* Score */
+int update_score(int lines);
+
 
 #endif // TETRIS_H

@@ -30,8 +30,6 @@ int main(int argc, char **argv){
 
     timeout(0);     // Blocking on getch
 
-    // int speed; // ms
-    // int level;
 
     while (game_status){
 
@@ -44,26 +42,24 @@ int main(int argc, char **argv){
         print_next_tile(next_tile_win, game.next_shape.fig);
         print_stats(sidemenu_win);
 
-        #ifdef TETRIS_DEBUG
-            werase(debug_win);
-            wmove(debug_win, 0, 0);
-            wprintw(debug_win, "CS 0x%08x X: %ld Y: %ld R: %ld", *game.current_shape.fig.sh, 
-                                                            game.current_shape.loc.x, 
-                                                            game.current_shape.loc.y, 
-                                                            game.current_shape.rots); 
-            wmove(debug_win, 1, 0);
-            wprintw(debug_win, "NS 0x%08x X: %ld", *game.next_shape.fig.sh, game.next_shape.loc.x); 
-            wmove(debug_win, 2, 0);
-            wprintw(debug_win, "Input: %d", input); 
-            wrefresh(debug_win);
-            print_rulers(board_win);
-        #endif
+#       ifdef TETRIS_DEBUG
+        werase(debug_win);
+        wmove(debug_win, 0, 0);
+        wprintw(debug_win, "CS 0x%08x X: %lx Y: %ld R: %ld", *game.current_shape.fig.sh, 
+                                                        game.current_shape.loc.x, 
+                                                        game.current_shape.loc.y, 
+                                                        game.current_shape.rots); 
+        wmove(debug_win, 1, 0);
+        wprintw(debug_win, "NS 0x%08x X: %lx", *game.next_shape.fig.sh, game.next_shape.loc.x); 
+        wmove(debug_win, 2, 0);
+        wprintw(debug_win, "Input: %d", input); 
+        wrefresh(debug_win);
+#       endif
 
         /* Read user input*/
         user_input = read_user_input(&input);
 
-        //set_next_shapes(&game);
-        sleep_ms(50);
+        sleep_ms(10);
     }
     finish_program();
     return 0;

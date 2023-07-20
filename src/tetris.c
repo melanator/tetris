@@ -83,8 +83,8 @@ Shape init_shape(){
 
     result.fig = init_figure();
     result.loc.y = 0;
-    result.loc.x = rand() % (TETRIS_WIDTH - result.fig.size->x);  // shape to spawn randomly
-    // result.loc.x = 0; // shape to spawn randomly for debug
+    result.loc.x = rand() % (TETRIS_WIDTH - result.fig.size->x - 1);  // shape to spawn randomly
+    //result.loc.x = (TETRIS_WIDTH - result.fig.size->x); // shape to spawn randomly for debug
     result.rots = 0;
     init_board(result.shape_board);
     add_to_board(result.shape_board, &result);
@@ -100,28 +100,29 @@ void update_board(tilerow *board, unsigned x, unsigned y){
     board[y] |= (1 << x);
 }
 
-/* Return true if falls to the end */
+/* Return true if board changes */
 bool fall_shape(Game* game, Shape* shape){
     size_t current_row = shape->loc.y + shape->fig.size->y - 1;
+
     if (current_row == 19)
-        return true;
+        return false;
 
     if(check_colliision_below(shape->shape_board[current_row], game->board[current_row + 1]))
-        return true;   
+        return false;   
     
     else {
         shape->loc.y++;
         init_board(shape->shape_board);
         add_to_board(shape->shape_board, shape);
-        return false;
+        return true;
     }
 }
 
 // Fall till the end
 bool free_fall_shape(Game* game, Shape* shape){
-    bool is_reached_end = false;
-    while (!is_reached_end)
-        is_reached_end = fall_shape(game, shape);
+    bool is_falling = true;
+    while (is_falling)
+        is_falling = fall_shape(game, shape);
     return true;
 }
 
@@ -161,8 +162,11 @@ void add_to_board(tilerow* board, const Shape* sh){
         // shift to end
         shifted >>= 12 - (start_line++ * 4);
 
-        // shift to needed position
-        shifted <<= TETRIS_WIDTH - 4 - sh->loc.x;
+        // shift to needed position, if tile is in right end, shift right
+        if (sh->loc.x < 13)
+            shifted <<= TETRIS_WIDTH - 4 - sh->loc.x;
+        else
+            shifted >>= (sh->loc.x) - 12;
         
         // bitwise or
         board[i + sh->loc.y] |= shifted;
@@ -202,12 +206,13 @@ bool gravity_tick(Game* game){
 }
 
 bool game_tick(Game* game, move_choice move){
-    bool is_reached_bottom;
+    bool is_reached_bottom = true;
 
     if (gravity_tick(game))
         is_reached_bottom = fall_shape(game, &game->current_shape);
     
-    if (is_reached_bottom)
+    // Here some unlogic
+    if (!is_reached_bottom)
         finish_tile(game);   
 
     proceed_user_input(game, move);
@@ -228,16 +233,21 @@ bool finish_game(Game* game){
     return result;
 }
 
-void proceed_user_input(Game* game, move_choice user_input){
+bool proceed_user_input(Game* game, move_choice user_input){
     /* Apply user move */
+    bool refresh_window = false;
+    
     switch (user_input){
     case MOVE_LEFT:
+        refresh_window = move_left(game, &game->current_shape);
         break;
     case MOVE_RIGHT:
+        refresh_window = move_right(game, &game->current_shape);
         break;
     case MOVE_DOWN:
         free_fall_shape(game, &game->current_shape);
         finish_tile(game);
+        refresh_window = true;
         break;
     case MOVE_ROTATE:
         break;
@@ -246,8 +256,57 @@ void proceed_user_input(Game* game, move_choice user_input){
     case NOMOVE:
         break;
     }
+
+    return refresh_window;
 }
 
 bool check_colliision_below(tilerow top, tilerow bottom){
     return top & bottom;
+}
+
+int count_filled_lines(tilerow* board){
+    return 0;
+}
+
+void clear_line(tilerow* board){
+}
+
+
+int update_score(int lines){
+    return 0;
+}
+
+bool move_left(Game* game, Shape* shape){
+    if (shape->loc.x == 0)
+        return false;
+    
+    for (int i = 0; i < shape->fig.size->y; i++)
+        shape->shape_board[shape->loc.y + i] <<= 1;
+
+    if (!check_collisions(game->board, shape->shape_board)){
+        --shape->loc.x;
+        return true;
+    }
+    else{
+        for (int i = 0; i < shape->fig.size->y; i++)
+            shape->shape_board[shape->loc.y + i] >>= 1;
+        return false;
+    }
+}
+
+bool move_right(Game* game, Shape* shape){
+    if ((shape->loc.x + shape->fig.size->x) == TETRIS_WIDTH)
+        return false;
+    for (int i = 0; i < shape->fig.size->y; i++)
+        shape->shape_board[shape->loc.y + i] >>= 1;
+
+    if (!check_collisions(game->board, shape->shape_board)){
+        ++shape->loc.x;
+        return true;
+    }
+    else{
+        for (int i = 0; i < shape->fig.size->y; i++)
+            shape->shape_board[shape->loc.y + i] <<= 1;
+        return false;
+    }
 }
