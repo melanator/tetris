@@ -105,11 +105,11 @@ void print_next_tile(WINDOW *win, Figure figure){
     wrefresh(win);
 }
 
-void print_stats(WINDOW *win){
+void print_stats(Game* game, WINDOW *win){
     wmove(win, 0, 0);
     wprintw(win, "LEVEL: %d", 0); 
     wmove(win, 1, 0);
-    wprintw(win, "SCORE: %d", 0); 
+    wprintw(win, "SCORE: %d", game->points); 
     wmove(win, 2, 0);
     wprintw(win, "BEST: %d", 0);
     wrefresh(win);

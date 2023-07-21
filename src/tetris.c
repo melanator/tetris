@@ -139,6 +139,8 @@ bool rotate_shape(Game* game, Shape* shape){
         shape->fig.center = shape->fig.center - 3;
         shape->fig.size = shape->fig.size - 3;
     }
+    if (shape->loc.x + shape->fig.size->x > TETRIS_WIDTH)
+        shape->loc.x--;
 
     init_board(shape->shape_board);
     add_to_board(shape->shape_board, shape);
@@ -214,6 +216,12 @@ bool game_tick(Game* game, move_choice move){
     if (finish_game(game))
         return false;
 
+    int filled_lines = count_filled_lines(game->board);
+
+    if (filled_lines > 0){
+        update_score(game, filled_lines);
+    }
+
     bool is_reached_bottom = true;
 
     if (gravity_tick(game))
@@ -277,14 +285,29 @@ bool check_colliision_below(tilerow top, tilerow bottom){
 }
 
 int count_filled_lines(tilerow* board){
-    return 0;
+    int count = 0;
+    for (int i = 0; i < TETRIS_HEIGHT; i++){
+        if (board[i] == 0xffff){
+            count++;
+            clear_line(board, i);
+        }
+    }
+    return count;
 }
 
-void clear_line(tilerow* board){
+void clear_line(Board board, size_t position){
+    for (int i = position; i >= 0; i--){
+        board[i] = board[i - 1];
+    }
+    board[0] = 0x0000;
 }
 
 
-int update_score(int lines){
+int update_score(Game* game, int lines){
+    if (lines <= 1)
+        game->points += lines * 100;
+    else
+        game->points += lines * 100 * (1 + (0.25 * lines));
     return 0;
 }
 

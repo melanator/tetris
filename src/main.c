@@ -40,7 +40,7 @@ int main(int argc, char **argv){
         print_board(game.board, board_win);
         print_board(game.current_shape.shape_board, board_win);
         print_next_tile(next_tile_win, game.next_shape.fig);
-        print_stats(sidemenu_win);
+        print_stats(&game, sidemenu_win);
 
 #       ifdef TETRIS_DEBUG
         werase(debug_win);
@@ -50,8 +50,13 @@ int main(int argc, char **argv){
                                                         game.current_shape.loc.y, 
                                                         game.current_shape.rots); 
         wmove(debug_win, 1, 0);
-        wprintw(debug_win, "NS 0x%08x X: %lx", *game.next_shape.fig.sh, game.next_shape.loc.x); 
+        wprintw(debug_win, "Shape: 0x%x X: %lx, Y: %lx", 
+                                    *game.current_shape.fig.sh,
+                                    game.current_shape.fig.size->x,
+                                    game.current_shape.fig.size->y);
         wmove(debug_win, 2, 0);
+        wprintw(debug_win, "NS 0x%08x X: %lx", *game.next_shape.fig.sh, game.next_shape.loc.x); 
+        wmove(debug_win, 3, 0);
         wprintw(debug_win, "Input: %d", input); 
         wrefresh(debug_win);
 #       endif
